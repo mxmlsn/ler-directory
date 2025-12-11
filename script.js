@@ -1,19 +1,18 @@
 // === КОНФИГУРАЦИЯ ===
 const PREFIX = '/root/services/usr/+1073/pckg/data/wear/type'; 
-const ALL_IMAGES = ['/1.png', '/2.png', '/3.png', '/4.png', '/5.png', '/6.png', '/7.png'];
-const VIDEO_POSTER = '/head-poster.png'; // Изображение для миниатюры видео
+const VIDEO_POSTER = '/img/shared/head-poster.png'; // Изображение для миниатюры видео
 
 // База Данных
 const DATABASE = [
-    { type: 'cover', id: '00', img: '/4.png' },
-    { key: 'clo',   id: '01', type: 'product', cat:'Longsleeve', name: 'HOODIE "DOG"',  price: '80', img: '/1.png' },
-    { key: 'acc',   id: '02', type: 'product', cat:'Accessory',  name: 'LEATHER BELT',  price: '45', img: '/2.png' },
-    { key: 'shoes', id: '03', type: 'product', cat:'Footwear',   name: 'TECH BOOTS',    price: '120', img: '/3.png' },
-    { key: 'bag',   id: '04', type: 'product', cat:'Storage',    name: 'SIDE BAG',      price: '65', img: '/4.png' },
-    { key: 'hat',   id: '05', type: 'product', cat:'Headwear',   name: 'NYLON CAP',     price: '30', img: '/5.png' },
-    { key: 'misc',  id: '06', type: 'product', cat:'Object',     name: 'KEYCHAIN',      price: '15', img: '/6.png' },
-    { key: 'final', id: '07', type: 'product', cat:'Archive',    name: 'LOOKBOOK',      price: '00', img: '/7.png' },
-    { type: 'contacts', id: '08', img: '/4.png' }
+    { type: 'cover', id: '00', img: '/img/cover/4.png' },
+    { key: 'clo',   id: '01', type: 'product', cat:'Longsleeve', name: 'HOODIE "DOG"',  price: '80', img: '/img/products/clo/main.png' },
+    { key: 'acc',   id: '02', type: 'product', cat:'Accessory',  name: 'LEATHER BELT',  price: '45', img: '/img/products/acc/main.png' },
+    { key: 'shoes', id: '03', type: 'product', cat:'Footwear',   name: 'TECH BOOTS',    price: '120', img: '/img/products/shoes/main.png' },
+    { key: 'bag',   id: '04', type: 'product', cat:'Storage',    name: 'SIDE BAG',      price: '65', img: '/img/products/bag/main.png' },
+    { key: 'hat',   id: '05', type: 'product', cat:'Headwear',   name: 'NYLON CAP',     price: '30', img: '/img/products/hat/main.png' },
+    { key: 'misc',  id: '06', type: 'product', cat:'Object',     name: 'KEYCHAIN',      price: '15', img: '/img/products/misc/main.png' },
+    { key: 'final', id: '07', type: 'product', cat:'Archive',    name: 'LOOKBOOK',      price: '00', img: '/img/products/final/main.png' },
+    { type: 'contacts', id: '08', img: '/img/cover/4.png' }
 ];
 
 let galleryState = {};
@@ -72,10 +71,25 @@ function init() {
             sheet.className = 'paper-sheet';
             sheet.setAttribute('data-key', item.key);
             
-            const galleryImages = [item.img];
-            const randomExtra = ALL_IMAGES.filter(src => src !== item.img).sort(()=>0.5-Math.random()).slice(0, 2);
+            // Создаем массив изображений для галереи из папки товара
+            const productImages = [
+                `/img/products/${item.key}/1.png`,
+                `/img/products/${item.key}/2.png`,
+                `/img/products/${item.key}/3.png`,
+                `/img/products/${item.key}/4.png`,
+                `/img/products/${item.key}/5.png`,
+                `/img/products/${item.key}/6.png`,
+                `/img/products/${item.key}/7.png`
+            ];
+            
+            const galleryImages = [item.img]; // Основное изображение
+            // Добавляем случайные дополнительные изображения из папки товара (исключая основное)
+            const randomExtra = productImages
+                .filter(src => src !== item.img)
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 2);
             galleryImages.push(...randomExtra);
-            galleryImages.push('/head.mp4'); // Добавляем видео в галерею
+            galleryImages.push('/img/shared/head.mp4'); // Добавляем видео в галерею
             
             sheet.dataset.gallery = JSON.stringify(galleryImages);
             galleryState[index] = 0;
@@ -129,7 +143,14 @@ function init() {
         navItem.className = 'nav-item';
         navItem.id = `nav-${index}`;
         navItem.onclick = () => window.scrollToPage(index);
-        navItem.innerHTML = `<img src="${item.type === 'cover' ? item.img : item.img}" class="nav-thumb"><span class="nav-label">${item.id || 'Cover'}</span>`;
+        
+        // Используем специальное изображение для обложки и контактов в навигации
+        let navImg = item.img;
+        if (item.type === 'cover' || item.type === 'contacts') {
+            navImg = '/img/shared/nav-thumb.png';
+        }
+        
+        navItem.innerHTML = `<img src="${navImg}" class="nav-thumb"><span class="nav-label">${item.id || 'Cover'}</span>`;
         navContainer.appendChild(navItem);
     });
 

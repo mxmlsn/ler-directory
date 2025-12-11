@@ -5,11 +5,123 @@ body {
     background-color: #525659;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     height: 100vh;
-    display: flex; /* Сайдбар и Мейн рядом */
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
-/* --- 1. САЙДБАР (Фиксированный) --- */
+/* --- ВЕРХНЯЯ ПАНЕЛЬ (FIXED) --- */
+.top-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 50px;
+    background-color: #323639;
+    color: #f1f1f1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    z-index: 2000; /* Поверх всего */
+}
+
+.tb-left, .tb-center, .tb-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.menu-trigger {
+    cursor: pointer; 
+    padding: 5px; 
+    display: flex; 
+    align-items: center;
+}
+.menu-trigger:hover { opacity: 0.7; }
+
+.doc-title {
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.doc-title:hover { text-decoration: underline; }
+
+/* Инпуты */
+.pagination-ctrl, .zoom-ctrl {
+    display: flex;
+    align-items: center;
+    background: #000;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+input[type="number"] {
+    background: transparent;
+    border: none;
+    color: white;
+    font-family: monospace;
+    text-align: center;
+    width: 30px;
+    outline: none;
+    -moz-appearance: textfield;
+}
+/* Увеличиваем ширину инпута зума, чтобы влезало 120% */
+#zoom-input {
+    width: 45px; 
+}
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.zoom-ctrl button { background: none; border: none; color: white; cursor: pointer; padding: 0 5px; }
+.icon-btn { cursor: pointer; opacity: 0.8; transition: 0.2s; }
+.icon-btn:hover { opacity: 1; color: #4fa3ff; }
+
+
+/* --- POP-UP MENU (TOC) --- */
+.toc-popup {
+    display: none; /* Скрыто по умолчанию */
+    position: fixed;
+    top: 50px; /* Сразу под баром */
+    left: 0;
+    width: 200px;
+    background-color: #2b2b2b; /* Темный фон как на скрине */
+    padding: 20px;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+    z-index: 1900;
+}
+.toc-popup.show { display: block; }
+
+.toc-header {
+    color: #f1f1f1;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+.toc-item {
+    color: #aaa;
+    font-size: 13px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.toc-item:hover {
+    color: white;
+    text-decoration: underline; /* Подчеркивание при наведении */
+}
+.toc-item.active { color: white; text-decoration: underline; }
+
+
+/* --- РАБОЧАЯ ОБЛАСТЬ (WORKSPACE) --- */
+.workspace {
+    margin-top: 50px; /* Отступ под верхнюю панель */
+    height: calc(100vh - 50px);
+    display: flex;
+    width: 100%;
+}
+
+/* 1. САЙДБАР */
 .sidebar {
     width: 250px;
     background-color: #323639;
@@ -17,15 +129,6 @@ body {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    z-index: 20;
-}
-
-.sidebar-header {
-    padding: 15px;
-    color: #ddd;
-    font-size: 12px;
-    border-bottom: 1px solid #444;
-    background: #323639;
 }
 
 #nav-container {
@@ -34,72 +137,22 @@ body {
     padding: 15px;
 }
 
-/* Карточка в меню */
-.nav-item {
-    margin-bottom: 15px;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-    text-align: center;
-}
-.nav-item:hover { opacity: 1; }
-.nav-item.active { opacity: 1; }
+.nav-item { margin-bottom: 15px; cursor: pointer; opacity: 0.7; text-align: center; }
+.nav-item:hover, .nav-item.active { opacity: 1; }
 .nav-item.active .nav-thumb { border: 2px solid #1a73e8; }
-
-.nav-thumb {
-    width: 100%;
-    height: auto;
-    background: white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    display: block;
-    margin-bottom: 5px;
-}
+.nav-thumb { width: 100%; height: auto; background: white; margin-bottom: 5px; display: block; }
 .nav-label { color: #aaa; font-size: 10px; }
 
 
-/* --- 2. ОСНОВНАЯ ЧАСТЬ --- */
+/* 2. ОСНОВНАЯ ЧАСТЬ */
 .main-viewer {
     flex: 1;
+    background-color: #525659;
     display: flex;
     flex-direction: column;
-    position: relative;
-    background-color: #525659;
+    overflow: hidden;
 }
 
-/* Верхняя панель */
-.top-bar {
-    height: 45px;
-    background-color: #323639;
-    color: #f1f1f1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    z-index: 10;
-}
-.tb-left, .tb-center, .tb-right { display: flex; align-items: center; gap: 15px; }
-.doc-title { font-size: 13px; font-weight: 500; cursor: pointer; }
-
-/* Инпуты */
-.pagination-ctrl, .zoom-ctrl {
-    background: #000;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-size: 11px;
-    display: flex;
-    align-items: center;
-}
-input[type="number"] {
-    background: transparent; border: none; color: white;
-    font-family: monospace; text-align: center; width: 30px; outline: none;
-}
-.zoom-ctrl button { background: none; border: none; color: white; cursor: pointer; padding: 0 5px; }
-.icon-btn { cursor: pointer; opacity: 0.7; }
-.icon-btn:hover { opacity: 1; }
-
-/* Зона скролла */
 .scroll-area {
     flex: 1;
     overflow-y: auto;
@@ -124,13 +177,8 @@ input[type="number"] {
     position: relative;
 }
 
-/* 1. ОБЛОЖКА (Cover Page) */
-.cover-sheet {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    background: #f8f8f8; /* Чуть сероватый фон для обложки */
-}
+/* Обложка */
+.cover-sheet { display: flex; flex-direction: row; justify-content: space-between; background: #f8f8f8; }
 .cover-left { flex: 1; padding-top: 20px; }
 .logo-big { font-size: 120px; font-weight: bold; line-height: 1; margin-bottom: 80px; letter-spacing: -5px;}
 .toc-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; }
@@ -139,181 +187,59 @@ input[type="number"] {
 .cover-right { flex: 0.8; display: flex; align-items: flex-end; justify-content: flex-end; }
 .cube-img { width: 80%; mix-blend-mode: multiply; }
 
-/* 2. СТРАНИЦА ТОВАРА (Product Page) */
-.sheet-top {
-    border-bottom: 2px solid black; padding-bottom:5px; margin-bottom:30px;
-    display:flex; justify-content:space-between; font-size:10px; font-family:monospace;
-}
+/* Товар */
+.sheet-top { border-bottom: 2px solid black; padding-bottom:5px; margin-bottom:30px; display:flex; justify-content:space-between; font-size:10px; font-family:monospace; }
 .content-grid { display: flex; gap: 40px; }
 .left-col { flex: 0.8; }
 .right-col { flex: 1.2; position: relative; user-select: none; }
-
-/* Галерея */
-.main-img-wrapper {
-    position: relative;
-    width: 100%;
-    height: auto;
-}
+.main-img-wrapper { position: relative; width: 100%; height: auto; }
 .main-img { width: 100%; display: block; }
-
-/* Зоны клика (влево/вправо) */
-.click-zone {
-    position: absolute; top: 0; bottom: 0; width: 40%;
-    cursor: pointer; z-index: 5;
-}
-.click-zone:hover { background: rgba(0,0,0,0.02); } /* легкая подсветка */
+.click-zone { position: absolute; top: 0; bottom: 0; width: 40%; cursor: pointer; z-index: 5; }
 .zone-left { left: 0; }
 .zone-right { right: 0; }
-
-.mini-gallery {
-    margin-top: 30px; display: flex; gap: 10px;
-}
-.mini-thumb {
-    width: 50px; height: 50px; object-fit: cover; 
-    border: 1px solid #ccc; cursor: pointer;
-}
+.mini-gallery { margin-top: 30px; display: flex; gap: 10px; }
+.mini-thumb { width: 50px; height: 50px; object-fit: cover; border: 1px solid #ccc; cursor: pointer; }
 .mini-thumb.active { border: 2px solid black; }
-
-/* Тексты */
 h1 { font-size: 32px; text-transform: uppercase; margin: 10px 0 20px 0; }
 .specs p { font-family: monospace; font-size: 10px; margin: 2px 0; text-transform: uppercase; color: #333; }
-.price-box {
-    margin-top: 20px; background: #e0e0e0; display: inline-block;
-    padding: 10px 30px; font-size: 22px; font-weight: bold; font-family: Arial;
-}
-.vertical-code {
-    position: absolute; right: -30px; top: 50%;
-    transform: rotate(90deg); font-family: monospace; font-size: 10px; letter-spacing: 2px;
-}
-/* =========================================
-   МОБИЛЬНАЯ ВЕРСИЯ (Fixes & Layout)
-   ========================================= */
-.mobile-cart-icon { display: none; } /* Скрыта на ПК */
+.price-box { margin-top: 20px; background: #e0e0e0; display: inline-block; padding: 10px 30px; font-size: 22px; font-weight: bold; font-family: Arial; }
+.vertical-code { position: absolute; right: -30px; top: 50%; transform: rotate(90deg); font-family: monospace; font-size: 10px; letter-spacing: 2px; }
+
+/* === МОБИЛЬНАЯ ВЕРСИЯ === */
+.mobile-cart-icon { display: none; }
 
 @media (max-width: 768px) {
-
-    /* Глобальный фикс горизонтального скролла */
-    body, html {
-        overflow-x: hidden;
-        width: 100%;
-        position: fixed; /* Фиксируем боди, чтобы не шаталось */
-    }
-
-    /* 1. САЙДБАР (Узкая полоска слева) */
-    .sidebar {
-        width: 50px;
-        min-width: 50px; /* Чтобы не сжимался */
-        z-index: 100;
-        overflow: hidden; /* Скрываем скроллбары */
-    }
-
-    /* Иконка корзины (НОВОЕ) */
-    .mobile-cart-icon {
-        display: flex;
-        height: 50px; /* Квадрат сверху */
-        background: #000; /* Черный фон для контраста */
-        color: white;
-        align-items: center;
-        justify-content: center;
-        border-bottom: 1px solid #333;
-        flex-shrink: 0; /* Не сжимается при скролле */
-        cursor: pointer;
-    }
-
-    /* Список миниатюр */
-    #nav-container {
-        padding: 10px 0;
-        overflow-y: auto; /* Скроллится только этот блок */
-        overflow-x: hidden;
-        -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
-        scrollbar-width: none; /* Скрываем полосу прокрутки */
-    }
-    #nav-container::-webkit-scrollbar { display: none; }
-
-    .sidebar-header { display: none; } /* Убираем текст заголовка */
-    .nav-label { display: none; } /* Убираем подписи */
+    body, html { overflow-x: hidden; width: 100%; position: fixed; }
     
-    .nav-item {
-        margin-bottom: 10px;
-        padding: 0;
-        display: flex;
-        justify-content: center;
-    }
-    .nav-thumb {
-        width: 36px;
-        height: 36px;
-        margin: 0;
-        border: 1px solid #444;
-    }
+    /* Сайдбар */
+    .sidebar { width: 50px; min-width: 50px; z-index: 100; overflow: hidden; }
+    .mobile-cart-icon { display: flex; height: 50px; background: #000; color: white; align-items: center; justify-content: center; border-bottom: 1px solid #333; flex-shrink: 0; cursor: pointer; }
+    #nav-container { padding: 10px 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    #nav-container::-webkit-scrollbar { display: none; }
+    .nav-label { display: none; }
+    .nav-item { margin-bottom: 10px; padding: 0; display: flex; justify-content: center; }
+    .nav-thumb { width: 36px; height: 36px; margin: 0; border: 1px solid #444; }
     .nav-item.active .nav-thumb { border: 2px solid #fff; }
 
-
-    /* 2. ОСНОВНАЯ ЧАСТЬ */
-    .main-viewer {
-        width: calc(100% - 50px); /* Занимает оставшееся место */
-        overflow-x: hidden;
-    }
-
-    .top-bar {
-        display: none; /* Убираем верхнюю панель на мобильном (лишнее место) */
-    }
-
-    .scroll-area {
-        padding: 20px 0;
-        width: 100%;
-        overflow-x: hidden;
-    }
+    /* Workspace */
+    .workspace { margin-top: 0; height: 100vh; } /* Убираем отступ сверху т.к. бар скрыт */
+    .main-viewer { width: calc(100% - 50px); overflow-x: hidden; }
+    .top-bar { display: none; } /* Скрываем бар */
+    .toc-popup { display: none !important; } /* Скрываем попап */
     
-    #zoom-wrapper {
-        width: 100%; /* Отключаем зум-враппер, чтобы не вылезал */
-        transform: none !important; /* Отключаем JS зум на мобиле */
-        display: block;
-    }
-
-    /* 3. ЛИСТ БУМАГИ */
-    .paper-sheet {
-        width: 92%; /* Чуть меньше экрана */
-        min-height: auto;
-        margin: 0 auto 15px auto;
-        padding: 20px 15px;
-        box-sizing: border-box; /* Чтобы паддинги не расширяли блок */
-    }
-
-    /* 4. КОНТЕНТ (Фото сверху, текст снизу) */
-    .content-grid {
-        display: flex;
-        flex-direction: column-reverse; /* Переворот */
-        gap: 15px;
-    }
+    .scroll-area { padding: 20px 0; width: 100%; overflow-x: hidden; }
+    #zoom-wrapper { width: 100%; transform: none !important; display: block; }
+    
+    .paper-sheet { width: 92%; min-height: auto; margin: 0 auto 15px auto; padding: 20px 15px; box-sizing: border-box; }
+    .content-grid { display: flex; flex-direction: column-reverse; gap: 15px; }
     .left-col, .right-col { width: 100%; }
+    .click-zone { display: none; }
+    h1 { font-size: 22px; line-height: 1; margin-top: 5px; }
+    .price-box { width: 100%; text-align: center; box-sizing: border-box; }
+    .main-img { width: 100%; height: auto; }
+    .mini-gallery { justify-content: center; }
     
-    .click-zone { display: none; } /* Убираем зоны клика, мешают скроллить */
-    
-    h1 {
-        font-size: 22px;
-        line-height: 1;
-        margin-top: 5px;
-    }
-
-    .price-box {
-        width: 100%;
-        text-align: center;
-        box-sizing: border-box;
-    }
-
-    .main-img {
-        width: 100%;
-        height: auto;
-    }
-
-    .mini-gallery {
-        justify-content: center; /* Галерея по центру */
-    }
-
-    /* Обложка */
-    .cover-sheet {
-        flex-direction: column-reverse;
-    }
+    .cover-sheet { flex-direction: column-reverse; }
     .logo-big { font-size: 60px; margin-bottom: 20px;}
     .cube-img { width: 60%; margin: 0 auto 20px auto; display:block; }
 }

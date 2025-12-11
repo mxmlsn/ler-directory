@@ -196,3 +196,26 @@ pageInput.addEventListener('change', (e) => {
 });
 
 init();
+
+
+// === УПРАВЛЕНИЕ С КЛАВИАТУРЫ (Стрелки) ===
+document.addEventListener('keydown', (e) => {
+    // Получаем номер текущей страницы из инпута (он обновляется сам при скролле)
+    const currentVal = parseInt(document.getElementById('page-input').value);
+    const currentIndex = currentVal - 1; // Превращаем в индекс (0, 1, 2...)
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault(); // Запрещаем обычный скролл
+        const nextIndex = currentIndex + 1;
+        if (nextIndex < DATABASE.length) {
+            window.scrollToPage(nextIndex);
+        }
+    } 
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const prevIndex = currentIndex - 1;
+        if (prevIndex >= 0) {
+            window.scrollToPage(prevIndex);
+        }
+    }
+});

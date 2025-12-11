@@ -1,196 +1,203 @@
+/* --- ОСНОВНЫЕ НАСТРОЙКИ --- */
 body {
     margin: 0;
     padding: 0;
+    background-color: #525659; /* Темный фон PDF ридера */
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    overflow: hidden; /* Скроллим только внутреннюю часть */
     height: 100vh;
     display: flex;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    background-color: #525659; /* Темно-серый фон PDF ридера */
-    overflow: hidden;
+    flex-direction: column;
 }
 
-/* Сайдбар слева */
-.sidebar {
-    width: 240px;
-    background: #323639;
-    border-right: 1px solid #000;
-    display: flex;
-    flex-direction: column;
+/* --- ВЕРХНЯЯ ПАНЕЛЬ --- */
+.top-bar {
+    height: 50px;
+    background-color: #323639;
     color: #f1f1f1;
-    flex-shrink: 0;
-}
-
-.sidebar-header {
-    padding: 15px;
-    border-bottom: 1px solid #444;
-    font-size: 12px;
-    font-family: monospace;
-}
-
-#nav-container {
-    overflow-y: auto;
-    padding: 10px;
-    flex: 1;
-}
-
-.nav-btn {
-    display: block;
-    margin-bottom: 15px;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-.nav-btn:hover { opacity: 1; }
-.nav-btn.active { opacity: 1; border: 2px solid #0078d7; }
-
-.nav-thumb {
-    width: 100%;
-    height: 120px;
-    background: white;
-    object-fit: contain;
-    padding: 10px;
-    box-sizing: border-box;
-}
-
-.nav-caption {
-    text-align: center;
-    font-size: 10px;
-    margin-top: 2px;
-}
-
-/* Основная область */
-.main-viewer {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.pdf-topbar {
-    height: 40px;
-    background: #323639;
-    color: white;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 20px;
-    font-size: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    z-index: 10;
+    padding: 0 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    z-index: 1000;
+    flex-shrink: 0;
 }
 
-/* Лист бумаги */
+.tb-left, .tb-center, .tb-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.menu-trigger { cursor: pointer; padding: 5px; }
+.doc-title { font-size: 14px; font-weight: 500; cursor: pointer; }
+
+/* Инпуты (пагинация и зум) */
+.pagination-ctrl, .zoom-ctrl {
+    display: flex;
+    align-items: center;
+    background: #000;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+input[type="number"] {
+    background: transparent;
+    border: none;
+    color: white;
+    font-family: monospace;
+    text-align: center;
+    width: 40px;
+    outline: none;
+    -moz-appearance: textfield;
+}
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.zoom-ctrl button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 0 5px;
+}
+
+/* Иконки справа */
+.icon-btn { cursor: pointer; opacity: 0.8; transition: 0.2s; }
+.icon-btn:hover { opacity: 1; color: #4fa3ff; }
+
+/* --- МЕНЮ (OVERLAY) --- */
+.overlay-menu {
+    position: fixed;
+    top: 50px; /* Сразу под баром */
+    left: -300px; /* Спрятано */
+    width: 250px;
+    bottom: 0;
+    background: #2a2a2a;
+    z-index: 900;
+    transition: left 0.3s ease;
+    padding: 20px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    overflow-y: auto;
+}
+
+/* Показываем меню когда активен класс или ховер на триггер */
+.overlay-menu.open, .menu-trigger:hover + .overlay-menu, .overlay-menu:hover {
+    left: 0;
+}
+
+.menu-header {
+    color: #888;
+    text-transform: uppercase;
+    font-size: 12px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+}
+
+.menu-link {
+    display: block;
+    color: #ddd;
+    text-decoration: none;
+    padding: 8px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #333;
+    cursor: pointer;
+}
+.menu-link:hover { color: white; padding-left: 5px; transition: 0.2s; }
+.menu-link.active { color: #4fa3ff; font-weight: bold; }
+
+/* --- ОБЛАСТЬ СКРОЛЛА --- */
+.main-scroll-area {
+    flex: 1;
+    overflow-y: scroll;
+    padding: 40px 0;
+    text-align: center; /* Центрируем зум-обертку */
+}
+
+#zoom-wrapper {
+    display: inline-block;
+    transition: transform 0.2s ease-out;
+    transform-origin: top center;
+}
+
+/* --- СТРАНИЦА (PAPER) --- */
 .paper-sheet {
     background: white;
-    width: 1000px; /* Ширина как на скрине */
-    margin: 30px auto;
+    width: 1000px;
     height: auto;
     min-height: 700px;
-    padding: 40px 50px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    overflow-y: auto;
+    margin: 0 auto 30px auto; /* Отступ снизу между страницами */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    padding: 50px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    text-align: left;
+    position: relative;
 }
 
-/* Верх и Низ листа */
-.sheet-header {
-    border-bottom: 2px solid black;
-    padding-bottom: 5px;
-    display: flex;
-    justify-content: space-between;
-    font-family: 'Courier New', monospace;
-    font-size: 11px;
-    font-weight: bold;
-    text-transform: uppercase;
-    margin-bottom: 30px;
-}
-
-.sheet-footer {
-    border-top: 2px solid black;
-    padding-top: 8px;
-    display: flex;
-    justify-content: space-between;
-    font-family: 'Courier New', monospace;
-    font-size: 9px;
-    margin-top: 40px;
-}
-
-/* Сетка контента */
+/* Верстка внутри страницы (Скриншот 3) */
 .content-grid {
     display: flex;
-    flex: 1;
     gap: 40px;
 }
 
-.text-column { flex: 0.8; }
-.image-column { 
-    flex: 1.2; 
-    position: relative; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    cursor: pointer;
-}
+.left-col { flex: 0.8; display: flex; flex-direction: column; }
+.right-col { flex: 1.2; position: relative; }
 
-/* Типографика */
-.item-meta {
-    font-size: 12px;
-    font-family: 'Courier New', monospace;
-    color: #333;
-    margin-bottom: 10px;
-    line-height: 1.4;
-}
+/* Тексты */
+h1 { font-size: 32px; text-transform: uppercase; margin: 10px 0 20px 0; letter-spacing: -1px; }
+.meta { font-family: monospace; color: #666; font-size: 11px; }
+.specs p { font-family: monospace; font-size: 10px; margin: 2px 0; text-transform: uppercase; color: #333; }
 
-#item-title {
-    font-size: 28px;
-    font-weight: 900;
-    text-transform: uppercase;
-    margin: 0 0 30px 0;
-    letter-spacing: -0.5px;
-}
-
-.specs-block p {
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    line-height: 1.6;
-    margin: 0;
-    color: #444;
-    text-transform: uppercase;
-}
-
-/* Цена - серая плашка */
 .price-box {
-    margin-top: 30px;
-    background: #dddddd; /* Серый цвет фона */
+    margin-top: 20px;
+    background: #e0e0e0;
     display: inline-block;
-    padding: 8px 25px;
-    font-size: 20px;
+    padding: 10px 30px;
+    font-size: 22px;
     font-weight: bold;
     font-family: Arial, sans-serif;
 }
 
-.copyright-text {
-    margin-top: 40px;
-    font-size: 9px;
-    color: #888;
+/* Галерея миниатюр */
+.mini-gallery {
+    margin-top: auto; /* Прижать к низу колонки */
+    padding-top: 30px;
+    display: flex;
+    gap: 10px;
+}
+.mini-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+.mini-thumb:hover { border-color: black; }
+
+/* Главная картинка */
+.main-img {
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
-/* Картинка */
-#main-image {
-    max-width: 100%;
-    max-height: 500px;
-    object-fit: contain;
-}
-
-/* Вертикальный текст справа */
-.vertical-text {
+.vertical-code {
     position: absolute;
-    right: -30px;
-    top: 50%;
-    transform: translateY(-50%) rotate(90deg);
-    font-family: 'Courier New', monospace;
-    font-size: 11px;
+    right: -30px; top: 50%;
+    transform: rotate(90deg);
+    font-family: monospace;
+    font-size: 10px;
     letter-spacing: 2px;
-    white-space: nowrap;
+}
+
+/* Печать: скрываем интерфейс */
+@media print {
+    .top-bar, .overlay-menu { display: none; }
+    .main-scroll-area { overflow: visible; }
+    .paper-sheet { margin: 0; box-shadow: none; page-break-after: always; }
 }

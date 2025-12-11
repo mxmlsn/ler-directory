@@ -1,6 +1,7 @@
 // === КОНФИГУРАЦИЯ ===
 const PREFIX = '/root/services/usr/+1073/pckg/data/wear/type'; 
 const ALL_IMAGES = ['/1.png', '/2.png', '/3.png', '/4.png', '/5.png', '/6.png', '/7.png'];
+const VIDEO_POSTER = '/head-poster.png'; // Изображение для миниатюры видео
 
 // База Данных
 const DATABASE = [
@@ -11,7 +12,8 @@ const DATABASE = [
     { key: 'bag',   id: '04', type: 'product', cat:'Storage',    name: 'SIDE BAG',      price: '65', img: '/4.png' },
     { key: 'hat',   id: '05', type: 'product', cat:'Headwear',   name: 'NYLON CAP',     price: '30', img: '/5.png' },
     { key: 'misc',  id: '06', type: 'product', cat:'Object',     name: 'KEYCHAIN',      price: '15', img: '/6.png' },
-    { key: 'final', id: '07', type: 'product', cat:'Archive',    name: 'LOOKBOOK',      price: '00', img: '/7.png' }
+    { key: 'final', id: '07', type: 'product', cat:'Archive',    name: 'LOOKBOOK',      price: '00', img: '/7.png' },
+    { type: 'contacts', id: '08', img: '/4.png' }
 ];
 
 let galleryState = {};
@@ -52,6 +54,20 @@ function init() {
                 </div>
                 <div class="cover-right"><img src="${item.img}" class="cube-img"></div>
             `;
+        } else if (item.type === 'contacts') {
+            sheet.className = 'paper-sheet contacts-sheet';
+            sheet.innerHTML = `
+                <div style="display: flex; flex-direction: column; height: 100%; justify-content: center; align-items: center; text-align: center;">
+                    <div class="logo-big" style="margin-bottom: 60px;">Le®</div>
+                    <div style="font-family: monospace; font-size: 14px; color: #333; line-height: 2;">
+                        <p style="font-size: 18px; font-weight: bold; margin-bottom: 30px; text-transform: uppercase;">Contact</p>
+                        <p>+(1073) 34 932 6173</p>
+                        <p>info@loveexpensive.com</p>
+                        <p style="margin-top: 40px; font-size: 12px;">Copyright © 2025 Love expensive®</p>
+                        <p style="font-size: 10px; color: #666; margin-top: 20px;">All rights reserved</p>
+                    </div>
+                </div>
+            `;
         } else {
             sheet.className = 'paper-sheet';
             sheet.setAttribute('data-key', item.key);
@@ -59,13 +75,19 @@ function init() {
             const galleryImages = [item.img];
             const randomExtra = ALL_IMAGES.filter(src => src !== item.img).sort(()=>0.5-Math.random()).slice(0, 2);
             galleryImages.push(...randomExtra);
+            galleryImages.push('/head.mp4'); // Добавляем видео в галерею
             
             sheet.dataset.gallery = JSON.stringify(galleryImages);
             galleryState[index] = 0;
 
             let thumbsHTML = '';
             galleryImages.forEach((src, i) => {
-                thumbsHTML += `<img src="${src}" class="mini-thumb ${i===0?'active':''}" onclick="setGalleryImage(${index}, ${i})">`;
+                if (src.endsWith('.mp4')) {
+                    // Для видео используем кастомную миниатюру через poster
+                    thumbsHTML += `<video src="${src}" poster="${VIDEO_POSTER}" class="mini-thumb ${i===0?'active':''}" onclick="setGalleryImage(${index}, ${i})" muted preload="metadata"></video>`;
+                } else {
+                    thumbsHTML += `<img src="${src}" class="mini-thumb ${i===0?'active':''}" onclick="setGalleryImage(${index}, ${i})">`;
+                }
             });
 
             sheet.innerHTML = `
@@ -91,6 +113,7 @@ function init() {
                             <div class="click-zone zone-left" onclick="switchImage(${index}, -1)"></div>
                             <div class="click-zone zone-right" onclick="switchImage(${index}, 1)"></div>
                             <img src="${item.img}" class="main-img" id="main-img-${index}">
+                            <video class="main-video" id="main-video-${index}" style="display: none;" controls muted loop></video>
                         </div>
                         <div class="vertical-code">+(1073) 34 932 6173</div>
                     </div>
@@ -154,7 +177,24 @@ function updateGalleryView(pageIndex, imgIndex) {
     galleryState[pageIndex] = imgIndex;
     const sheet = document.getElementById(`page-${pageIndex}`);
     const images = JSON.parse(sheet.dataset.gallery);
-    document.getElementById(`main-img-${pageIndex}`).src = images[imgIndex];
+    const currentMedia = images[imgIndex];
+    const mainImg = document.getElementById(`main-img-${pageIndex}`);
+    const mainVideo = document.getElementById(`main-video-${pageIndex}`);
+    
+    if (currentMedia.endsWith('.mp4')) {
+        // Показываем видео, скрываем изображение
+        mainImg.style.display = 'none';
+        mainVideo.style.display = 'block';
+        mainVideo.src = currentMedia;
+        mainVideo.play();
+    } else {
+        // Показываем изображение, скрываем видео
+        mainImg.style.display = 'block';
+        mainVideo.style.display = 'none';
+        mainVideo.pause();
+        mainImg.src = currentMedia;
+    }
+    
     const thumbs = document.getElementById(`gallery-thumbs-${pageIndex}`).getElementsByClassName('mini-thumb');
     Array.from(thumbs).forEach((t, i) => {
         if(i === imgIndex) t.classList.add('active'); else t.classList.remove('active');
@@ -171,8 +211,16 @@ const observer = new IntersectionObserver((entries) => {
             const item = DATABASE[index];
             if(document.activeElement !== pageInput) pageInput.value = index + 1;
             
-            let newUrl = item.type === 'cover' ? `${PREFIX}/index.pdf` : `${PREFIX}/${item.key}.pdf`;
-            if(window.location.pathname !== newUrl) window.history.replaceState(null, "", newUrl);
+            // Используем hash для навигации вместо полного пути, чтобы не ломать работу сервера
+            let newUrl;
+            if (item.type === 'cover') {
+                newUrl = `#index`;
+            } else if (item.type === 'contacts') {
+                newUrl = `#contacts`;
+            } else {
+                newUrl = `#${item.key}`;
+            }
+            if(window.location.hash !== newUrl) window.history.replaceState(null, "", newUrl);
 
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             const activeNav = document.getElementById(`nav-${index}`);

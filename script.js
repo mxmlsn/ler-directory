@@ -2,7 +2,7 @@
 const PREFIX = '/root/services/usr/+1073/pckg/data/wear/type'; 
 
 // === ВАШИ ДАННЫЕ ===
-// ВАЖНО: Перед именами файлов (1.png) добавлен слэш /
+// Слэш / перед именами файлов обязателен
 const DATABASE = {
     'clo':    { id: '01', type: 'Longsleeve', name: 'HOODIE "DOG"',  price: '80', img: '/1.png' },
     'acc':    { id: '02', type: 'Accessory',  name: 'LEATHER BELT',  price: '45', img: '/2.png' },
@@ -18,12 +18,22 @@ const DEFAULT_KEY = 'clo';
 // === ЛОГИКА РАБОТЫ ===
 const navContainer = document.getElementById('nav-container');
 
+// Вспомогательная функция: очищает .pdf из URL, чтобы получить чистый ключ (clo, acc)
+function getKeyFromUrl(path) {
+    let filename = path.split('/').pop(); // Берем последнее слово
+    return filename.replace('.pdf', '');  // Убираем .pdf если есть
+}
+
 function render(key) {
+    // Очищаем ключ на всякий случай
+    key = key.replace('.pdf', '');
+    
     if (!DATABASE[key]) key = DEFAULT_KEY;
     const item = DATABASE[key];
 
-    // 1. Заполняем тексты на странице
-    document.getElementById('path-display').innerText = `PATH: .../WEAR/TYPE/${key.toUpperCase()}`;
+    // 1. Заполняем тексты
+    // Добавляем .PDF визуально на листе бумаги
+    document.getElementById('path-display').innerText = `PATH: .../WEAR/TYPE/${key.toUpperCase()}.PDF`;
     document.getElementById('item-id').innerText = item.id;
     document.getElementById('item-category').innerText = item.type;
     document.getElementById('item-title').innerText = item.name;
@@ -33,50 +43,52 @@ function render(key) {
     // 2. Ставим картинку
     document.getElementById('main-image').src = item.img;
 
-    // 3. Подсвечиваем кнопку в меню
+    // 3. Подсветка меню
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.getElementById(`btn-${key}`);
     if (activeBtn) activeBtn.classList.add('active');
 
-    // 4. Меняем URL в браузере
-    const targetUrl = `${PREFIX}/${key}`;
+    // 4. Меняем URL в браузере (ДОБАВЛЯЕМ .pdf)
+    const targetUrl = `${PREFIX}/${key}.pdf`;
+    
+    // Меняем историю только если URL отличается
     if (window.location.pathname !== targetUrl) {
         window.history.pushState({key}, "", targetUrl);
     }
 }
 
-// Генерируем меню слева
+// Генерируем меню
 const keys = Object.keys(DATABASE);
 keys.forEach(key => {
     const item = DATABASE[key];
     const btn = document.createElement('div');
     btn.className = 'nav-btn';
     btn.id = `btn-${key}`;
-    // В меню показываем маленькую картинку и номер
     btn.innerHTML = `
         <img src="${item.img}" class="nav-thumb">
         <div class="nav-caption">${item.id}</div>
     `;
-    btn.onclick = () => render(key);
+    btn.onclick = () => render(key); // При клике вызовется render('clo') -> URL станет clo.pdf
     navContainer.appendChild(btn);
 });
 
-// Клик по картинке - следующая страница
+// Клик по картинке - листаем дальше
 function nextPage() {
-    const currentPath = window.location.pathname.split('/').pop();
-    let idx = keys.indexOf(currentPath);
+    const currentKey = getKeyFromUrl(window.location.pathname);
+    let idx = keys.indexOf(currentKey);
     if (idx === -1) idx = 0;
     const nextIdx = (idx + 1) % keys.length;
     render(keys[nextIdx]);
 }
 
-// При загрузке страницы
+// При загрузке страницы (F5)
 window.onload = () => {
-    const slug = window.location.pathname.split('/').pop();
+    const slug = getKeyFromUrl(window.location.pathname);
     render(slug || DEFAULT_KEY);
 };
 
 // Кнопка "Назад" в браузере
 window.onpopstate = () => {
-    render(window.location.pathname.split('/').pop());
+    const slug = getKeyFromUrl(window.location.pathname);
+    render(slug);
 };

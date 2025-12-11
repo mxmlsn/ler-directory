@@ -227,19 +227,18 @@ pageInput.addEventListener('change', (e) => {
 
 init();
 
-// === COOKIE LOGIC ===
-const cookieBanner = document.getElementById('cookie-banner');
+// === COOKIE LOGIC (UPDATED) ===
+window.addEventListener('load', () => {
+    const cookieBanner = document.getElementById('cookie-banner');
+    
+    // Проверка на существование элемента и записи в памяти
+    if (cookieBanner && !localStorage.getItem('cookies_accepted')) {
+        cookieBanner.style.display = 'flex';
+    }
+});
 
-// 1. Проверяем, есть ли запись в памяти браузера
-if (!localStorage.getItem('cookies_accepted')) {
-    // Если нет - показываем баннер
-    cookieBanner.style.display = 'flex';
-}
-
-// 2. Функция принятия
 window.acceptCookies = function() {
-    // Сохраняем "галочку" в память браузера
+    const cookieBanner = document.getElementById('cookie-banner');
     localStorage.setItem('cookies_accepted', 'true');
-    // Скрываем баннер
-    cookieBanner.style.display = 'none';
+    if (cookieBanner) cookieBanner.style.display = 'none';
 }

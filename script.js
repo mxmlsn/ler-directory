@@ -1,8 +1,8 @@
 // === КОНФИГУРАЦИЯ ===
 const PREFIX = '/root/services/usr/+1073/pckg/data/wear/type'; 
-const ALL_IMAGES = ['/1.png', '/2.png', '/3.png', '/4.png', '/5.png', '/6.png', '/7.png'];
+const ALL_MEDIA = ['/1.png', '/2.png', '/3.png', '/4.png', '/5.png', '/6.png', '/7.png'];
 
-// База Данных
+// === БАЗА ДАННЫХ ===
 const DATABASE = [
     { type: 'cover', id: '00', img: '/4.png' },
     { key: 'clo',   id: '01', type: 'product', cat:'Longsleeve', name: 'HOODIE "DOG"',  price: '80', img: '/1.png' },
@@ -25,6 +25,17 @@ const totalPagesSpan = document.getElementById('total-pages');
 const zoomWrapper = document.getElementById('zoom-wrapper');
 const tocBtn = document.getElementById('toc-btn');
 const tocPopup = document.getElementById('toc-popup');
+
+// Вспомогательная: Картинка или Видео?
+function getMediaHTML(src, className, id = '') {
+    const isVideo = src.endsWith('.mp4') || src.endsWith('.webm');
+    const idAttr = id ? `id="${id}"` : '';
+    if (isVideo) {
+        return `<video src="${src}" class="${className}" ${idAttr} autoplay muted loop playsinline></video>`;
+    } else {
+        return `<img src="${src}" class="${className}" ${idAttr}>`;
+    }
+}
 
 function init() {
     totalPagesSpan.innerText = DATABASE.length;
@@ -55,16 +66,19 @@ function init() {
             sheet.className = 'paper-sheet';
             sheet.setAttribute('data-key', item.key);
             
-            const galleryImages = [item.img];
-            const randomExtra = ALL_IMAGES.filter(src => src !== item.img).sort(()=>0.5-Math.random()).slice(0, 2);
-            galleryImages.push(...randomExtra);
+            const galleryMedia = [item.img];
+            const randomExtra = ALL_MEDIA.filter(src => src !== item.img).sort(()=>0.5-Math.random()).slice(0, 2);
+            galleryMedia.push(...randomExtra);
             
-            sheet.dataset.gallery = JSON.stringify(galleryImages);
+            sheet.dataset.gallery = JSON.stringify(galleryMedia);
             galleryState[index] = 0;
 
             let thumbsHTML = '';
-            galleryImages.forEach((src, i) => {
-                thumbsHTML += `<img src="${src}" class="mini-thumb ${i===0?'active':''}" onclick="setGalleryImage(${index}, ${i})">`;
+            galleryMedia.forEach((src, i) => {
+                const activeClass = i === 0 ? 'active' : '';
+                thumbsHTML += `<div class="mini-thumb-wrapper ${activeClass}" onclick="setGalleryImage(${index}, ${i})">
+                                ${getMediaHTML(src, 'mini-thumb-content')}
+                               </div>`;
             });
 
             sheet.innerHTML = `
@@ -86,10 +100,10 @@ function init() {
                         <div class="mini-gallery" id="gallery-thumbs-${index}">${thumbsHTML}</div>
                     </div>
                     <div class="right-col">
-                        <div class="main-img-wrapper">
+                        <div class="main-img-wrapper" id="main-wrapper-${index}">
                             <div class="click-zone zone-left" onclick="switchImage(${index}, -1)"></div>
                             <div class="click-zone zone-right" onclick="switchImage(${index}, 1)"></div>
-                            <img src="${item.img}" class="main-img" id="main-img-${index}">
+                            ${getMediaHTML(item.img, 'main-img', `main-media-${index}`)}
                         </div>
                         <div class="vertical-code">+(1073) 34 932 6173</div>
                     </div>
@@ -104,63 +118,56 @@ function init() {
         const navItem = document.createElement('div');
         navItem.className = 'nav-item';
         navItem.id = `nav-${index}`;
-        navItem.onclick = () => window.scrollToPage(index); // Важно: вызываем глобальную функцию
-        navItem.innerHTML = `<img src="${item.type === 'cover' ? item.img : item.img}" class="nav-thumb"><span class="nav-label">${item.id || 'Cover'}</span>`;
+        navItem.onclick = () => window.scrollToPage(index);
+        navItem.innerHTML = `<div class="nav-thumb">${getMediaHTML(item.type === 'cover' ? item.img : item.img, 'nav-media-content')}</div><span class="nav-label">${item.id || 'Cover'}</span>`;
         navContainer.appendChild(navItem);
     });
 
     updateZoom(currentZoom);
 }
 
-// === ЛОГИКА МЕНЮ ===
-tocBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // Чтобы клик не ушел на body
-    tocPopup.classList.toggle('show');
-});
+// === МЕНЮ И НАВИГАЦИЯ ===
+tocBtn.addEventListener('click', (e) => { e.stopPropagation(); tocPopup.classList.toggle('show'); });
+document.body.addEventListener('click', () => { tocPopup.classList.remove('show'); });
 
-// Закрыть меню при клике в любое другое место
-document.body.addEventListener('click', () => {
-    tocPopup.classList.remove('show');
-});
-
-// Глобальная функция для использования в HTML onclick
 window.scrollToPage = function(index) {
     const el = document.getElementById(`page-${index}`);
-    if(el) {
-        el.scrollIntoView({ behavior: 'auto' });
-    }
+    if(el) el.scrollIntoView({ behavior: 'auto' });
 }
 
-// Фильтр заглушка (просто скроллит к одежде)
-window.filterTo = function(category) {
-    // В реальном проекте тут можно фильтровать, сейчас просто скроллим к первому товару
-    window.scrollToPage(1);
-}
+window.filterTo = function(category) { window.scrollToPage(1); }
 
-
-// === ГАЛЕРЕЯ, ЗУМ, СКРОЛЛ ===
+// === ГАЛЕРЕЯ ===
 window.setGalleryImage = function(pageIndex, imgIndex) { updateGalleryView(pageIndex, imgIndex); }
 window.switchImage = function(pageIndex, direction) {
     const sheet = document.getElementById(`page-${pageIndex}`);
-    const images = JSON.parse(sheet.dataset.gallery);
+    const mediaList = JSON.parse(sheet.dataset.gallery);
     let current = galleryState[pageIndex];
     let next = current + direction;
-    if (next < 0) next = images.length - 1;
-    if (next >= images.length) next = 0;
+    if (next < 0) next = mediaList.length - 1;
+    if (next >= mediaList.length) next = 0;
     updateGalleryView(pageIndex, next);
 }
 
-function updateGalleryView(pageIndex, imgIndex) {
-    galleryState[pageIndex] = imgIndex;
+function updateGalleryView(pageIndex, mediaIndex) {
+    galleryState[pageIndex] = mediaIndex;
     const sheet = document.getElementById(`page-${pageIndex}`);
-    const images = JSON.parse(sheet.dataset.gallery);
-    document.getElementById(`main-img-${pageIndex}`).src = images[imgIndex];
-    const thumbs = document.getElementById(`gallery-thumbs-${pageIndex}`).getElementsByClassName('mini-thumb');
-    Array.from(thumbs).forEach((t, i) => {
-        if(i === imgIndex) t.classList.add('active'); else t.classList.remove('active');
+    const mediaList = JSON.parse(sheet.dataset.gallery);
+    const newSrc = mediaList[mediaIndex];
+    const wrapper = document.getElementById(`main-wrapper-${pageIndex}`);
+    const zoneL = wrapper.querySelector('.zone-left');
+    const zoneR = wrapper.querySelector('.zone-right');
+    wrapper.innerHTML = '';
+    wrapper.appendChild(zoneL);
+    wrapper.appendChild(zoneR);
+    wrapper.insertAdjacentHTML('beforeend', getMediaHTML(newSrc, 'main-img', `main-media-${pageIndex}`));
+    const thumbs = document.getElementById(`gallery-thumbs-${pageIndex}`).getElementsByClassName('mini-thumb-wrapper');
+    Array.from(thumbs).forEach((el, i) => {
+        if(i === mediaIndex) el.classList.add('active'); else el.classList.remove('active');
     });
 }
 
+// === OBSERVER (С ИСПРАВЛЕНИЕМ ДЛЯ САЙДБАРА) ===
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -173,13 +180,20 @@ const observer = new IntersectionObserver((entries) => {
 
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             const activeNav = document.getElementById(`nav-${index}`);
-            if(activeNav) activeNav.classList.add('active');
+            if(activeNav) {
+                activeNav.classList.add('active');
+                
+                // --- ВОТ ИСПРАВЛЕНИЕ ---
+                // Прокручиваем сайдбар к активной иконке, если она ушла за экран
+                activeNav.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
         }
     });
 }, { threshold: 0.4 });
 
 setTimeout(() => { document.querySelectorAll('.paper-sheet').forEach(el => observer.observe(el)); }, 500);
 
+// === ЗУМ И ИНПУТ ===
 window.changeZoom = function(delta) { updateZoom(currentZoom + delta); }
 document.getElementById('zoom-input').addEventListener('change', (e) => updateZoom(parseInt(e.target.value)));
 function updateZoom(val) {
@@ -193,6 +207,27 @@ pageInput.addEventListener('change', (e) => {
     let val = parseInt(e.target.value);
     if(val < 1) val = 1; if(val > DATABASE.length) val = DATABASE.length;
     window.scrollToPage(val - 1);
+});
+
+// === УПРАВЛЕНИЕ С КЛАВИАТУРЫ (Стрелки) ===
+document.addEventListener('keydown', (e) => {
+    const currentVal = parseInt(document.getElementById('page-input').value);
+    const currentIndex = currentVal - 1; 
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault(); 
+        const nextIndex = currentIndex + 1;
+        if (nextIndex < DATABASE.length) {
+            window.scrollToPage(nextIndex);
+        }
+    } 
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const prevIndex = currentIndex - 1;
+        if (prevIndex >= 0) {
+            window.scrollToPage(prevIndex);
+        }
+    }
 });
 
 init();

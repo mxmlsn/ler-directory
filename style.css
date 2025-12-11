@@ -246,46 +246,46 @@ h1 { font-size: 32px; text-transform: uppercase; margin: 10px 0 20px 0; }
 
 /* --- COOKIE BANNER --- */
 .cookie-banner {
-    display: none; /* Скрыт по умолчанию (JS проверит, нужно ли показывать) */
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: #000;
-    color: #fff;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 12px;
-    padding: 10px 0;
-    z-index: 9999;
-    text-align: center;
-    border-top: 1px solid #333;
+    display: none; /* Скрыт по умолчанию */
     
-    /* Flex для центрирования на мобилке */
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-/* На ПК ставим в одну строку */
-@media (min-width: 768px) {
-    .cookie-banner {
-        flex-direction: row;
-        justify-content: center;
-        gap: 20px;
-    }
-}
-
-.cookie-text s {
-    color: #666; /* Серый цвет для зачеркнутого hate */
-    text-decoration-thickness: 1px;
-}
-
-.cookie-btn {
-    cursor: pointer;
-    text-transform: uppercase;
+    /* Позиционирование */
+    position: fixed;
+    bottom: 30px; /* Отрыв от низа (примерно на высоту самого баннера) */
+    left: 50%;
+    transform: translateX(-50%); /* Строго по центру экрана */
+    z-index: 99999;
+    
+    /* Размеры и отступы */
+    width: fit-content; /* Ширина по контенту */
+    padding: 10px 20px; /* Немного воздуха вокруг текста */
+    
+    /* Цвета и Вид */
+    background-color: #000; /* Черный фон */
+    color: #fff; /* Белый текст */
+    border: none;
+    
+    /* Шрифт Arial Narrow Bold */
+    font-family: 'Arial Narrow', 'Helvetica Condensed', Arial, sans-serif;
     font-weight: bold;
+    font-size: 14px;
+    text-transform: lowercase; /* Все маленькими буквами */
+    white-space: nowrap; /* Текст в одну строку */
+    
+    /* Интерактивность */
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    user-select: none; /* Чтобы текст не выделялся при клике */
 }
-.cookie-btn:hover {
-    text-decoration: underline;
-    color: #4fa3ff; /* Ваш акцентный синий при наведении */
+
+/* Ховер эффект: Синий фон, белый текст */
+.cookie-banner:hover {
+    background-color: #0000FF; /* Яркий технический синий */
+    color: #fff;
+}
+
+/* Стиль зачеркнутого текста */
+.cookie-banner s {
+    text-decoration-thickness: 2px; /* Толстая линия зачеркивания */
+    color: #fff; /* Тоже белая, как просили */
+    margin-right: 4px;
 }

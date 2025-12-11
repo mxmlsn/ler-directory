@@ -185,3 +185,116 @@ h1 { font-size: 32px; text-transform: uppercase; margin: 10px 0 20px 0; }
     position: absolute; right: -30px; top: 50%;
     transform: rotate(90deg); font-family: monospace; font-size: 10px; letter-spacing: 2px;
 }
+
+/* =========================================
+   МОБИЛЬНАЯ ВЕРСИЯ (Только для экранов < 768px)
+   ========================================= */
+@media (max-width: 768px) {
+
+    /* 1. ИЗМЕНЕНИЯ САЙДБАРА (Узкий столбик) */
+    .sidebar {
+        width: 60px; /* Делаем очень узким */
+    }
+    .sidebar-header {
+        display: none; /* Скрываем заголовок сайдбара */
+    }
+    .nav-label {
+        display: none; /* Скрываем текст "Page 01" */
+    }
+    .nav-item {
+        padding: 5px;
+        margin-bottom: 5px;
+        text-align: center;
+    }
+    .nav-thumb {
+        height: 40px; /* Маленькие квадратики */
+        width: 40px;
+        margin: 0 auto;
+        border: 1px solid #555;
+    }
+    .nav-item.active .nav-thumb {
+        border: 2px solid #1a73e8;
+    }
+
+    /* 2. ИЗМЕНЕНИЯ ВЕРХНЕЙ ПАНЕЛИ */
+    .top-bar {
+        padding: 0 10px;
+        justify-content: center; /* Центрируем */
+    }
+    .tb-left, .tb-right {
+        display: none; /* Скрываем название и иконки справа, чтобы влезло */
+    }
+    .tb-center {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .doc-title { display: none; }
+
+    /* 3. ИЗМЕНЕНИЯ ЛИСТА БУМАГИ */
+    .paper-sheet {
+        width: 90%; /* Лист на всю ширину (с отступами) */
+        min-height: auto; /* Высота подстраивается под контент */
+        padding: 20px; /* Уменьшаем внутренние отступы */
+        margin: 0 auto 20px auto;
+    }
+
+    /* 4. ПЕРЕСТРОЙКА КОНТЕНТА (ФОТО СВЕРХУ, ТЕКСТ СНИЗУ) */
+    .content-grid {
+        flex-direction: column-reverse; /* Переворачиваем колонки: правая (фото) станет первой */
+        gap: 20px;
+    }
+
+    .left-col {
+        width: 100%;
+    }
+    .right-col {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    /* Убираем зоны клика на мобильном, чтобы можно было скроллить пальцем по картинке */
+    .click-zone { display: none; } 
+
+    /* Типографика для мобильных */
+    h1 {
+        font-size: 24px; /* Заголовок поменьше */
+        margin-top: 0;
+    }
+    .main-img {
+        max-height: 400px; /* Ограничиваем высоту картинки */
+        object-fit: contain;
+    }
+    .vertical-code {
+        display: none; /* Убираем вертикальный текст сбоку */
+    }
+    
+    /* Цена и кнопка */
+    .price-box {
+        width: 100%; /* Кнопка цены на всю ширину */
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    /* 5. ОБЛОЖКА (COVER PAGE) */
+    .cover-sheet {
+        flex-direction: column-reverse; /* Куб сверху, текст снизу */
+        align-items: center;
+        justify-content: center;
+    }
+    .cover-left {
+        width: 100%;
+        text-align: center;
+    }
+    .cover-right {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+    .toc-sub {
+        padding-left: 0; /* Убираем отступ списка */
+    }
+    .logo-big {
+        font-size: 80px; /* Логотип поменьше */
+        margin-bottom: 30px;
+    }
+}

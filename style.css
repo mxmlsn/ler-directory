@@ -2,135 +2,120 @@
 body {
     margin: 0;
     padding: 0;
-    background-color: #525659; /* Темный фон PDF ридера */
+    background-color: #525659;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    overflow: hidden; /* Скроллим только внутреннюю часть */
     height: 100vh;
-    display: flex;
-    flex-direction: column;
+    display: flex; /* Сайдбар и Мейн рядом */
+    overflow: hidden;
 }
 
-/* --- ВЕРХНЯЯ ПАНЕЛЬ --- */
+/* --- 1. САЙДБАР (Фиксированный) --- */
+.sidebar {
+    width: 250px;
+    background-color: #323639;
+    border-right: 1px solid #1e1e1e;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    z-index: 20;
+}
+
+.sidebar-header {
+    padding: 15px;
+    color: #ddd;
+    font-size: 12px;
+    border-bottom: 1px solid #444;
+    background: #323639;
+}
+
+#nav-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+/* Карточка в меню */
+.nav-item {
+    margin-bottom: 15px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    text-align: center;
+}
+.nav-item:hover { opacity: 1; }
+.nav-item.active { opacity: 1; }
+.nav-item.active .nav-thumb { border: 2px solid #1a73e8; }
+
+.nav-thumb {
+    width: 100%;
+    height: auto;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    display: block;
+    margin-bottom: 5px;
+}
+.nav-label { color: #aaa; font-size: 10px; }
+
+
+/* --- 2. ОСНОВНАЯ ЧАСТЬ --- */
+.main-viewer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background-color: #525659;
+}
+
+/* Верхняя панель */
 .top-bar {
-    height: 50px;
+    height: 45px;
     background-color: #323639;
     color: #f1f1f1;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    z-index: 1000;
-    flex-shrink: 0;
+    padding: 0 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10;
 }
+.tb-left, .tb-center, .tb-right { display: flex; align-items: center; gap: 15px; }
+.doc-title { font-size: 13px; font-weight: 500; cursor: pointer; }
 
-.tb-left, .tb-center, .tb-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.menu-trigger { cursor: pointer; padding: 5px; }
-.doc-title { font-size: 14px; font-weight: 500; cursor: pointer; }
-
-/* Инпуты (пагинация и зум) */
+/* Инпуты */
 .pagination-ctrl, .zoom-ctrl {
-    display: flex;
-    align-items: center;
     background: #000;
-    padding: 2px 8px;
+    padding: 3px 8px;
     border-radius: 4px;
     font-family: monospace;
-    font-size: 12px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
 }
-
 input[type="number"] {
-    background: transparent;
-    border: none;
-    color: white;
-    font-family: monospace;
-    text-align: center;
-    width: 40px;
-    outline: none;
-    -moz-appearance: textfield;
+    background: transparent; border: none; color: white;
+    font-family: monospace; text-align: center; width: 30px; outline: none;
 }
-input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.zoom-ctrl button { background: none; border: none; color: white; cursor: pointer; padding: 0 5px; }
+.icon-btn { cursor: pointer; opacity: 0.7; }
+.icon-btn:hover { opacity: 1; }
 
-.zoom-ctrl button {
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-    padding: 0 5px;
-}
-
-/* Иконки справа */
-.icon-btn { cursor: pointer; opacity: 0.8; transition: 0.2s; }
-.icon-btn:hover { opacity: 1; color: #4fa3ff; }
-
-/* --- МЕНЮ (OVERLAY) --- */
-.overlay-menu {
-    position: fixed;
-    top: 50px; /* Сразу под баром */
-    left: -300px; /* Спрятано */
-    width: 250px;
-    bottom: 0;
-    background: #2a2a2a;
-    z-index: 900;
-    transition: left 0.3s ease;
-    padding: 20px;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
-    overflow-y: auto;
-}
-
-/* Показываем меню когда активен класс или ховер на триггер */
-.overlay-menu.open, .menu-trigger:hover + .overlay-menu, .overlay-menu:hover {
-    left: 0;
-}
-
-.menu-header {
-    color: #888;
-    text-transform: uppercase;
-    font-size: 12px;
-    margin-bottom: 15px;
-    border-bottom: 1px solid #444;
-    padding-bottom: 5px;
-}
-
-.menu-link {
-    display: block;
-    color: #ddd;
-    text-decoration: none;
-    padding: 8px 0;
-    font-size: 14px;
-    border-bottom: 1px solid #333;
-    cursor: pointer;
-}
-.menu-link:hover { color: white; padding-left: 5px; transition: 0.2s; }
-.menu-link.active { color: #4fa3ff; font-weight: bold; }
-
-/* --- ОБЛАСТЬ СКРОЛЛА --- */
-.main-scroll-area {
+/* Зона скролла */
+.scroll-area {
     flex: 1;
-    overflow-y: scroll;
+    overflow-y: auto;
     padding: 40px 0;
-    text-align: center; /* Центрируем зум-обертку */
+    text-align: center;
 }
+#zoom-wrapper { display: inline-block; transform-origin: top center; transition: transform 0.1s; }
 
-#zoom-wrapper {
-    display: inline-block;
-    transition: transform 0.2s ease-out;
-    transform-origin: top center;
-}
 
-/* --- СТРАНИЦА (PAPER) --- */
+/* --- СТИЛИ СТРАНИЦ --- */
 .paper-sheet {
     background: white;
-    width: 1000px;
+    width: 900px;
     height: auto;
-    min-height: 700px;
-    margin: 0 auto 30px auto; /* Отступ снизу между страницами */
+    min-height: 650px;
+    margin: 0 auto 30px auto;
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     padding: 50px;
     display: flex;
@@ -139,65 +124,64 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
     position: relative;
 }
 
-/* Верстка внутри страницы (Скриншот 3) */
-.content-grid {
+/* 1. ОБЛОЖКА (Cover Page) */
+.cover-sheet {
     display: flex;
-    gap: 40px;
+    flex-direction: row;
+    justify-content: space-between;
+    background: #f8f8f8; /* Чуть сероватый фон для обложки */
 }
+.cover-left { flex: 1; padding-top: 20px; }
+.logo-big { font-size: 120px; font-weight: bold; line-height: 1; margin-bottom: 80px; letter-spacing: -5px;}
+.toc-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; }
+.toc-list p { font-size: 14px; margin: 8px 0; font-family: 'Arial', sans-serif; color: #333; }
+.toc-sub { padding-left: 20px; color: #666; font-size: 13px; }
+.cover-right { flex: 0.8; display: flex; align-items: flex-end; justify-content: flex-end; }
+.cube-img { width: 80%; mix-blend-mode: multiply; }
 
-.left-col { flex: 0.8; display: flex; flex-direction: column; }
-.right-col { flex: 1.2; position: relative; }
-
-/* Тексты */
-h1 { font-size: 32px; text-transform: uppercase; margin: 10px 0 20px 0; letter-spacing: -1px; }
-.meta { font-family: monospace; color: #666; font-size: 11px; }
-.specs p { font-family: monospace; font-size: 10px; margin: 2px 0; text-transform: uppercase; color: #333; }
-
-.price-box {
-    margin-top: 20px;
-    background: #e0e0e0;
-    display: inline-block;
-    padding: 10px 30px;
-    font-size: 22px;
-    font-weight: bold;
-    font-family: Arial, sans-serif;
+/* 2. СТРАНИЦА ТОВАРА (Product Page) */
+.sheet-top {
+    border-bottom: 2px solid black; padding-bottom:5px; margin-bottom:30px;
+    display:flex; justify-content:space-between; font-size:10px; font-family:monospace;
 }
+.content-grid { display: flex; gap: 40px; }
+.left-col { flex: 0.8; }
+.right-col { flex: 1.2; position: relative; user-select: none; }
 
-/* Галерея миниатюр */
-.mini-gallery {
-    margin-top: auto; /* Прижать к низу колонки */
-    padding-top: 30px;
-    display: flex;
-    gap: 10px;
-}
-.mini-thumb {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border: 1px solid #ccc;
-    cursor: pointer;
-}
-.mini-thumb:hover { border-color: black; }
-
-/* Главная картинка */
-.main-img {
+/* Галерея */
+.main-img-wrapper {
+    position: relative;
     width: 100%;
     height: auto;
-    display: block;
 }
+.main-img { width: 100%; display: block; }
 
+/* Зоны клика (влево/вправо) */
+.click-zone {
+    position: absolute; top: 0; bottom: 0; width: 40%;
+    cursor: pointer; z-index: 5;
+}
+.click-zone:hover { background: rgba(0,0,0,0.02); } /* легкая подсветка */
+.zone-left { left: 0; }
+.zone-right { right: 0; }
+
+.mini-gallery {
+    margin-top: 30px; display: flex; gap: 10px;
+}
+.mini-thumb {
+    width: 50px; height: 50px; object-fit: cover; 
+    border: 1px solid #ccc; cursor: pointer;
+}
+.mini-thumb.active { border: 2px solid black; }
+
+/* Тексты */
+h1 { font-size: 32px; text-transform: uppercase; margin: 10px 0 20px 0; }
+.specs p { font-family: monospace; font-size: 10px; margin: 2px 0; text-transform: uppercase; color: #333; }
+.price-box {
+    margin-top: 20px; background: #e0e0e0; display: inline-block;
+    padding: 10px 30px; font-size: 22px; font-weight: bold; font-family: Arial;
+}
 .vertical-code {
-    position: absolute;
-    right: -30px; top: 50%;
-    transform: rotate(90deg);
-    font-family: monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-}
-
-/* Печать: скрываем интерфейс */
-@media print {
-    .top-bar, .overlay-menu { display: none; }
-    .main-scroll-area { overflow: visible; }
-    .paper-sheet { margin: 0; box-shadow: none; page-break-after: always; }
+    position: absolute; right: -30px; top: 50%;
+    transform: rotate(90deg); font-family: monospace; font-size: 10px; letter-spacing: 2px;
 }

@@ -273,7 +273,6 @@ h1 { font-size: 32px; text-transform: uppercase; margin: 10px 0 20px 0; }
     
     /* Интерактивность */
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
     user-select: none; /* Чтобы текст не выделялся при клике */
 }
 
@@ -281,6 +280,7 @@ h1 { font-size: 32px; text-transform: uppercase; margin: 10px 0 20px 0; }
 .cookie-banner:hover {
     background-color: #0000FF; /* Яркий технический синий */
     color: #fff;
+    transition: none; /* Мгновенное изменение без анимации */
 }
 
 /* Стиль зачеркнутого текста */

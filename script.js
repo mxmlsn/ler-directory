@@ -1,18 +1,10 @@
 // === КОНФИГУРАЦИЯ ===
 const PREFIX = '/root/services/usr/+1073/pckg/data/wear/type'; 
-
-// Все доступные изображения (для имитации галереи)
 const ALL_IMAGES = ['/1.png', '/2.png', '/3.png', '/4.png', '/5.png', '/6.png', '/7.png'];
 
 // База Данных
-// 1-й элемент - ОБЛОЖКА (type: 'cover')
-// Остальные - ТОВАРЫ (type: 'product')
 const DATABASE = [
-    { 
-        type: 'cover', 
-        id: '00', 
-        img: '/4.png' // Используем куб или любую картинку для обложки
-    },
+    { type: 'cover', id: '00', img: '/4.png' },
     { key: 'clo',   id: '01', type: 'product', cat:'Longsleeve', name: 'HOODIE "DOG"',  price: '80', img: '/1.png' },
     { key: 'acc',   id: '02', type: 'product', cat:'Accessory',  name: 'LEATHER BELT',  price: '45', img: '/2.png' },
     { key: 'shoes', id: '03', type: 'product', cat:'Footwear',   name: 'TECH BOOTS',    price: '120', img: '/3.png' },
@@ -22,28 +14,25 @@ const DATABASE = [
     { key: 'final', id: '07', type: 'product', cat:'Archive',    name: 'LOOKBOOK',      price: '00', img: '/7.png' }
 ];
 
-// Хранилище состояния галерей для каждой страницы: { pageIndex: currentImageIndex }
 let galleryState = {};
+let currentZoom = 100;
 
-// === ИНИЦИАЛИЗАЦИЯ ===
+// === ЭЛЕМЕНТЫ ===
 const container = document.getElementById('pages-container');
 const navContainer = document.getElementById('nav-container');
 const pageInput = document.getElementById('page-input');
 const totalPagesSpan = document.getElementById('total-pages');
 const zoomWrapper = document.getElementById('zoom-wrapper');
-let currentZoom = 100;
+const tocBtn = document.getElementById('toc-btn');
+const tocPopup = document.getElementById('toc-popup');
 
 function init() {
     totalPagesSpan.innerText = DATABASE.length;
 
     DATABASE.forEach((item, index) => {
-        const pageNum = index + 1; // 1-based index
-        
-        // 1. Создаем DIV страницы
         const sheet = document.createElement('div');
         sheet.id = `page-${index}`;
         
-        // --- РЕНДЕР: ОБЛОЖКА ---
         if (item.type === 'cover') {
             sheet.className = 'paper-sheet cover-sheet';
             sheet.innerHTML = `
@@ -57,32 +46,22 @@ function init() {
                         <p class="toc-sub">1.2 Longsleeves</p>
                         <p class="toc-sub">1.3 Shirts</p>
                         <p class="toc-sub">1.4 Accessories</p>
-                        <p class="toc-sub">1.5 Jackets</p>
                         <p><strong>2. Objects</strong></p>
                     </div>
                 </div>
-                <div class="cover-right">
-                    <img src="${item.img}" class="cube-img">
-                </div>
+                <div class="cover-right"><img src="${item.img}" class="cube-img"></div>
             `;
-        } 
-        
-        // --- РЕНДЕР: ТОВАР ---
-        else {
+        } else {
             sheet.className = 'paper-sheet';
             sheet.setAttribute('data-key', item.key);
-
-            // Создаем массив картинок для этой страницы (Главная + 2 случайные для теста)
-            // В реальности вы бы прописали item.gallery = ['1.png', '1b.png']
+            
             const galleryImages = [item.img];
             const randomExtra = ALL_IMAGES.filter(src => src !== item.img).sort(()=>0.5-Math.random()).slice(0, 2);
             galleryImages.push(...randomExtra);
             
-            // Сохраняем эти картинки в элемент, чтобы читать их потом
             sheet.dataset.gallery = JSON.stringify(galleryImages);
-            galleryState[index] = 0; // Изначально показываем 0-ю картинку
+            galleryState[index] = 0;
 
-            // Генерируем HTML миниатюр
             let thumbsHTML = '';
             galleryImages.forEach((src, i) => {
                 thumbsHTML += `<img src="${src}" class="mini-thumb ${i===0?'active':''}" onclick="setGalleryImage(${index}, ${i})">`;
@@ -93,7 +72,6 @@ function init() {
                     <span>PATH: .../WEAR/TYPE/${item.key.toUpperCase()}.PDF</span>
                     <span>REF: 35099600 S</span>
                 </div>
-
                 <div class="content-grid">
                     <div class="left-col">
                         <div style="font-family:monospace; color:#666; font-size:11px;">Item # ${item.id}<br>${item.cat}</div>
@@ -103,15 +81,10 @@ function init() {
                             <p>COLOR: BLACK / GREY</p>
                             <p>WIDTH: 30 MM</p>
                             <p>SPECIAL FEATURES: UNISEX PACKAGE</p>
-                            <p>SPECIFICATION: CSS 286.21 A3</p>
                         </div>
                         <div class="price-box">€${item.price}</div>
-                        
-                        <div class="mini-gallery" id="gallery-thumbs-${index}">
-                            ${thumbsHTML}
-                        </div>
+                        <div class="mini-gallery" id="gallery-thumbs-${index}">${thumbsHTML}</div>
                     </div>
-
                     <div class="right-col">
                         <div class="main-img-wrapper">
                             <div class="click-zone zone-left" onclick="switchImage(${index}, -1)"></div>
@@ -121,53 +94,59 @@ function init() {
                         <div class="vertical-code">+(1073) 34 932 6173</div>
                     </div>
                 </div>
-
                 <div style="margin-top:auto; padding-top:20px; border-top:2px solid black; display:flex; justify-content:space-between; font-size:9px; font-family:monospace; color:#666;">
-                    <span>Copyright © 2025 Love expensive®</span>
-                    <span>${item.id}.</span>
+                    <span>Copyright © 2025 Love expensive®</span><span>${item.id}.</span>
                 </div>
             `;
         }
-
         container.appendChild(sheet);
 
-        // 2. Создаем Миниатюру в Сайдбаре
         const navItem = document.createElement('div');
         navItem.className = 'nav-item';
         navItem.id = `nav-${index}`;
-        navItem.onclick = () => scrollToPage(index);
-        
-        // Для обложки - просто текст или картинка
-        const thumbSrc = item.type === 'cover' ? item.img : item.img;
-        
-        navItem.innerHTML = `
-            <img src="${thumbSrc}" class="nav-thumb">
-            <span class="nav-label">${item.id || 'Cover'}</span>
-        `;
+        navItem.onclick = () => window.scrollToPage(index); // Важно: вызываем глобальную функцию
+        navItem.innerHTML = `<img src="${item.type === 'cover' ? item.img : item.img}" class="nav-thumb"><span class="nav-label">${item.id || 'Cover'}</span>`;
         navContainer.appendChild(navItem);
     });
 
-    // Устанавливаем зум
     updateZoom(currentZoom);
 }
 
-// === ЛОГИКА ГАЛЕРЕИ ===
+// === ЛОГИКА МЕНЮ ===
+tocBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Чтобы клик не ушел на body
+    tocPopup.classList.toggle('show');
+});
 
-// Переключение по клику на миниатюру
-window.setGalleryImage = function(pageIndex, imgIndex) {
-    updateGalleryView(pageIndex, imgIndex);
+// Закрыть меню при клике в любое другое место
+document.body.addEventListener('click', () => {
+    tocPopup.classList.remove('show');
+});
+
+// Глобальная функция для использования в HTML onclick
+window.scrollToPage = function(index) {
+    const el = document.getElementById(`page-${index}`);
+    if(el) {
+        el.scrollIntoView({ behavior: 'auto' });
+    }
 }
 
-// Переключение стрелками (зонами)
+// Фильтр заглушка (просто скроллит к одежде)
+window.filterTo = function(category) {
+    // В реальном проекте тут можно фильтровать, сейчас просто скроллим к первому товару
+    window.scrollToPage(1);
+}
+
+
+// === ГАЛЕРЕЯ, ЗУМ, СКРОЛЛ ===
+window.setGalleryImage = function(pageIndex, imgIndex) { updateGalleryView(pageIndex, imgIndex); }
 window.switchImage = function(pageIndex, direction) {
     const sheet = document.getElementById(`page-${pageIndex}`);
     const images = JSON.parse(sheet.dataset.gallery);
     let current = galleryState[pageIndex];
-    
     let next = current + direction;
-    if (next < 0) next = images.length - 1; // Зациклить
+    if (next < 0) next = images.length - 1;
     if (next >= images.length) next = 0;
-    
     updateGalleryView(pageIndex, next);
 }
 
@@ -175,71 +154,34 @@ function updateGalleryView(pageIndex, imgIndex) {
     galleryState[pageIndex] = imgIndex;
     const sheet = document.getElementById(`page-${pageIndex}`);
     const images = JSON.parse(sheet.dataset.gallery);
-    
-    // Меняем большую картинку
-    const mainImg = document.getElementById(`main-img-${pageIndex}`);
-    mainImg.src = images[imgIndex];
-    
-    // Обновляем активную миниатюру
-    const thumbContainer = document.getElementById(`gallery-thumbs-${pageIndex}`);
-    const thumbs = thumbContainer.getElementsByClassName('mini-thumb');
+    document.getElementById(`main-img-${pageIndex}`).src = images[imgIndex];
+    const thumbs = document.getElementById(`gallery-thumbs-${pageIndex}`).getElementsByClassName('mini-thumb');
     Array.from(thumbs).forEach((t, i) => {
-        if(i === imgIndex) t.classList.add('active');
-        else t.classList.remove('active');
+        if(i === imgIndex) t.classList.add('active'); else t.classList.remove('active');
     });
 }
 
-
-// === СКРОЛЛ И ЗУМ ===
-
-function scrollToPage(index) {
-    const el = document.getElementById(`page-${index}`);
-    el.scrollIntoView({ behavior: 'auto' }); // auto быстрее чем smooth для PDF
-}
-
-// Следим за скроллом, чтобы менять URL и подсветку в меню
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
-            const idStr = entry.target.id; // "page-0"
-            const index = parseInt(idStr.split('-')[1]);
+            const index = parseInt(entry.target.id.split('-')[1]);
             const item = DATABASE[index];
-
-            // Инпут
             if(document.activeElement !== pageInput) pageInput.value = index + 1;
+            
+            let newUrl = item.type === 'cover' ? `${PREFIX}/index.pdf` : `${PREFIX}/${item.key}.pdf`;
+            if(window.location.pathname !== newUrl) window.history.replaceState(null, "", newUrl);
 
-            // URL
-            let newUrl = '/';
-            if (item.type === 'cover') {
-                newUrl = `${PREFIX}/index.pdf`;
-            } else {
-                newUrl = `${PREFIX}/${item.key}.pdf`;
-            }
-            if(window.location.pathname !== newUrl) {
-                 window.history.replaceState(null, "", newUrl);
-            }
-
-            // Сайдбар Active
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             const activeNav = document.getElementById(`nav-${index}`);
             if(activeNav) activeNav.classList.add('active');
         }
     });
-}, { threshold: 0.4 }); // 40% видимости
+}, { threshold: 0.4 });
 
-setTimeout(() => {
-    document.querySelectorAll('.paper-sheet').forEach(el => observer.observe(el));
-}, 500);
+setTimeout(() => { document.querySelectorAll('.paper-sheet').forEach(el => observer.observe(el)); }, 500);
 
-// ЗУМ
-window.changeZoom = function(delta) {
-    updateZoom(currentZoom + delta);
-}
-
-document.getElementById('zoom-input').addEventListener('change', (e) => {
-    updateZoom(parseInt(e.target.value));
-});
-
+window.changeZoom = function(delta) { updateZoom(currentZoom + delta); }
+document.getElementById('zoom-input').addEventListener('change', (e) => updateZoom(parseInt(e.target.value)));
 function updateZoom(val) {
     currentZoom = val;
     if(currentZoom < 25) currentZoom = 25;
@@ -247,14 +189,10 @@ function updateZoom(val) {
     document.getElementById('zoom-input').value = currentZoom;
     zoomWrapper.style.transform = `scale(${currentZoom / 100})`;
 }
-
-// Инпут страниц
 pageInput.addEventListener('change', (e) => {
     let val = parseInt(e.target.value);
-    if(val < 1) val = 1;
-    if(val > DATABASE.length) val = DATABASE.length;
-    scrollToPage(val - 1);
+    if(val < 1) val = 1; if(val > DATABASE.length) val = DATABASE.length;
+    window.scrollToPage(val - 1);
 });
 
-// START
 init();

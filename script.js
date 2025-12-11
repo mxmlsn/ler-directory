@@ -226,3 +226,20 @@ pageInput.addEventListener('change', (e) => {
 });
 
 init();
+
+// === COOKIE LOGIC ===
+const cookieBanner = document.getElementById('cookie-banner');
+
+// 1. Проверяем, есть ли запись в памяти браузера
+if (!localStorage.getItem('cookies_accepted')) {
+    // Если нет - показываем баннер
+    cookieBanner.style.display = 'flex';
+}
+
+// 2. Функция принятия
+window.acceptCookies = function() {
+    // Сохраняем "галочку" в память браузера
+    localStorage.setItem('cookies_accepted', 'true');
+    // Скрываем баннер
+    cookieBanner.style.display = 'none';
+}

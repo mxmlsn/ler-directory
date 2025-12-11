@@ -266,7 +266,7 @@ h1 { font-size: 32px; text-transform: uppercase; margin: 10px 0 20px 0; }
     
     /* Шрифт Arial Narrow Bold */
     font-family: 'Arial Narrow', 'Helvetica Condensed', Arial, sans-serif;
-    font-weight: bold;
+    font-weight: regular;
     font-size: 14px;
     text-transform: lowercase; /* Все маленькими буквами */
     white-space: nowrap; /* Текст в одну строку */

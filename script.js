@@ -1,21 +1,18 @@
 // === НАСТРОЙКИ ПУТИ ===
-// Часть URL, которая будет всегда висеть в браузере
 const PREFIX = '/root/services/usr/+1073/pckg/data/wear/type'; 
 
-// === ВАШИ ДАННЫЕ (7 ФАЙЛОВ) ===
-// 'clo' - это то, что будет в конце ссылки.
-// img: '1.png' - это имя файла на GitHub
+// === ВАШИ ДАННЫЕ ===
+// ВАЖНО: Перед именами файлов (1.png) добавлен слэш /
 const DATABASE = {
-    'clo':    { id: '01', type: 'Longsleeve', name: 'HOODIE "DOG"',  price: '80', img: '1.png' },
-    'acc':    { id: '02', type: 'Accessory',  name: 'LEATHER BELT',  price: '45', img: '2.png' },
-    'shoes':  { id: '03', type: 'Footwear',   name: 'TECH BOOTS',    price: '120', img: '3.png' },
-    'bag':    { id: '04', type: 'Storage',    name: 'SIDE BAG',      price: '65', img: '4.png' },
-    'hat':    { id: '05', type: 'Headwear',   name: 'NYLON CAP',     price: '30', img: '5.png' },
-    'misc':   { id: '06', type: 'Object',     name: 'KEYCHAIN',      price: '15', img: '6.png' },
-    'final':  { id: '07', type: 'Archive',    name: 'LOOKBOOK',      price: '00', img: '7.png' }
+    'clo':    { id: '01', type: 'Longsleeve', name: 'HOODIE "DOG"',  price: '80', img: '/1.png' },
+    'acc':    { id: '02', type: 'Accessory',  name: 'LEATHER BELT',  price: '45', img: '/2.png' },
+    'shoes':  { id: '03', type: 'Footwear',   name: 'TECH BOOTS',    price: '120', img: '/3.png' },
+    'bag':    { id: '04', type: 'Storage',    name: 'SIDE BAG',      price: '65', img: '/4.png' },
+    'hat':    { id: '05', type: 'Headwear',   name: 'NYLON CAP',     price: '30', img: '/5.png' },
+    'misc':   { id: '06', type: 'Object',     name: 'KEYCHAIN',      price: '15', img: '/6.png' },
+    'final':  { id: '07', type: 'Archive',    name: 'LOOKBOOK',      price: '00', img: '/7.png' }
 };
 
-// С какой страницы начинать
 const DEFAULT_KEY = 'clo';
 
 // === ЛОГИКА РАБОТЫ ===
@@ -41,7 +38,7 @@ function render(key) {
     const activeBtn = document.getElementById(`btn-${key}`);
     if (activeBtn) activeBtn.classList.add('active');
 
-    // 4. Меняем URL в браузере (самое важное!)
+    // 4. Меняем URL в браузере
     const targetUrl = `${PREFIX}/${key}`;
     if (window.location.pathname !== targetUrl) {
         window.history.pushState({key}, "", targetUrl);

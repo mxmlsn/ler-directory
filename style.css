@@ -185,116 +185,135 @@ h1 { font-size: 32px; text-transform: uppercase; margin: 10px 0 20px 0; }
     position: absolute; right: -30px; top: 50%;
     transform: rotate(90deg); font-family: monospace; font-size: 10px; letter-spacing: 2px;
 }
-
 /* =========================================
-   МОБИЛЬНАЯ ВЕРСИЯ (Только для экранов < 768px)
+   МОБИЛЬНАЯ ВЕРСИЯ (Fixes & Layout)
    ========================================= */
+.mobile-cart-icon { display: none; } /* Скрыта на ПК */
+
 @media (max-width: 768px) {
 
-    /* 1. ИЗМЕНЕНИЯ САЙДБАРА (Узкий столбик) */
+    /* Глобальный фикс горизонтального скролла */
+    body, html {
+        overflow-x: hidden;
+        width: 100%;
+        position: fixed; /* Фиксируем боди, чтобы не шаталось */
+    }
+
+    /* 1. САЙДБАР (Узкая полоска слева) */
     .sidebar {
-        width: 60px; /* Делаем очень узким */
+        width: 50px;
+        min-width: 50px; /* Чтобы не сжимался */
+        z-index: 100;
+        overflow: hidden; /* Скрываем скроллбары */
     }
-    .sidebar-header {
-        display: none; /* Скрываем заголовок сайдбара */
+
+    /* Иконка корзины (НОВОЕ) */
+    .mobile-cart-icon {
+        display: flex;
+        height: 50px; /* Квадрат сверху */
+        background: #000; /* Черный фон для контраста */
+        color: white;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid #333;
+        flex-shrink: 0; /* Не сжимается при скролле */
+        cursor: pointer;
     }
-    .nav-label {
-        display: none; /* Скрываем текст "Page 01" */
+
+    /* Список миниатюр */
+    #nav-container {
+        padding: 10px 0;
+        overflow-y: auto; /* Скроллится только этот блок */
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+        scrollbar-width: none; /* Скрываем полосу прокрутки */
     }
+    #nav-container::-webkit-scrollbar { display: none; }
+
+    .sidebar-header { display: none; } /* Убираем текст заголовка */
+    .nav-label { display: none; } /* Убираем подписи */
+    
     .nav-item {
-        padding: 5px;
-        margin-bottom: 5px;
-        text-align: center;
+        margin-bottom: 10px;
+        padding: 0;
+        display: flex;
+        justify-content: center;
     }
     .nav-thumb {
-        height: 40px; /* Маленькие квадратики */
-        width: 40px;
-        margin: 0 auto;
-        border: 1px solid #555;
+        width: 36px;
+        height: 36px;
+        margin: 0;
+        border: 1px solid #444;
     }
-    .nav-item.active .nav-thumb {
-        border: 2px solid #1a73e8;
+    .nav-item.active .nav-thumb { border: 2px solid #fff; }
+
+
+    /* 2. ОСНОВНАЯ ЧАСТЬ */
+    .main-viewer {
+        width: calc(100% - 50px); /* Занимает оставшееся место */
+        overflow-x: hidden;
     }
 
-    /* 2. ИЗМЕНЕНИЯ ВЕРХНЕЙ ПАНЕЛИ */
     .top-bar {
-        padding: 0 10px;
-        justify-content: center; /* Центрируем */
+        display: none; /* Убираем верхнюю панель на мобильном (лишнее место) */
     }
-    .tb-left, .tb-right {
-        display: none; /* Скрываем название и иконки справа, чтобы влезло */
-    }
-    .tb-center {
-        width: 100%;
-        justify-content: space-between;
-    }
-    .doc-title { display: none; }
 
-    /* 3. ИЗМЕНЕНИЯ ЛИСТА БУМАГИ */
+    .scroll-area {
+        padding: 20px 0;
+        width: 100%;
+        overflow-x: hidden;
+    }
+    
+    #zoom-wrapper {
+        width: 100%; /* Отключаем зум-враппер, чтобы не вылезал */
+        transform: none !important; /* Отключаем JS зум на мобиле */
+        display: block;
+    }
+
+    /* 3. ЛИСТ БУМАГИ */
     .paper-sheet {
-        width: 90%; /* Лист на всю ширину (с отступами) */
-        min-height: auto; /* Высота подстраивается под контент */
-        padding: 20px; /* Уменьшаем внутренние отступы */
-        margin: 0 auto 20px auto;
+        width: 92%; /* Чуть меньше экрана */
+        min-height: auto;
+        margin: 0 auto 15px auto;
+        padding: 20px 15px;
+        box-sizing: border-box; /* Чтобы паддинги не расширяли блок */
     }
 
-    /* 4. ПЕРЕСТРОЙКА КОНТЕНТА (ФОТО СВЕРХУ, ТЕКСТ СНИЗУ) */
+    /* 4. КОНТЕНТ (Фото сверху, текст снизу) */
     .content-grid {
-        flex-direction: column-reverse; /* Переворачиваем колонки: правая (фото) станет первой */
-        gap: 20px;
+        display: flex;
+        flex-direction: column-reverse; /* Переворот */
+        gap: 15px;
     }
-
-    .left-col {
-        width: 100%;
-    }
-    .right-col {
-        width: 100%;
-        margin-bottom: 20px;
-    }
+    .left-col, .right-col { width: 100%; }
     
-    /* Убираем зоны клика на мобильном, чтобы можно было скроллить пальцем по картинке */
-    .click-zone { display: none; } 
-
-    /* Типографика для мобильных */
+    .click-zone { display: none; } /* Убираем зоны клика, мешают скроллить */
+    
     h1 {
-        font-size: 24px; /* Заголовок поменьше */
-        margin-top: 0;
+        font-size: 22px;
+        line-height: 1;
+        margin-top: 5px;
     }
-    .main-img {
-        max-height: 400px; /* Ограничиваем высоту картинки */
-        object-fit: contain;
-    }
-    .vertical-code {
-        display: none; /* Убираем вертикальный текст сбоку */
-    }
-    
-    /* Цена и кнопка */
+
     .price-box {
-        width: 100%; /* Кнопка цены на всю ширину */
+        width: 100%;
         text-align: center;
         box-sizing: border-box;
     }
 
-    /* 5. ОБЛОЖКА (COVER PAGE) */
+    .main-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .mini-gallery {
+        justify-content: center; /* Галерея по центру */
+    }
+
+    /* Обложка */
     .cover-sheet {
-        flex-direction: column-reverse; /* Куб сверху, текст снизу */
-        align-items: center;
-        justify-content: center;
+        flex-direction: column-reverse;
     }
-    .cover-left {
-        width: 100%;
-        text-align: center;
-    }
-    .cover-right {
-        width: 100%;
-        justify-content: center;
-        margin-bottom: 30px;
-    }
-    .toc-sub {
-        padding-left: 0; /* Убираем отступ списка */
-    }
-    .logo-big {
-        font-size: 80px; /* Логотип поменьше */
-        margin-bottom: 30px;
-    }
+    .logo-big { font-size: 60px; margin-bottom: 20px;}
+    .cube-img { width: 60%; margin: 0 auto 20px auto; display:block; }
 }

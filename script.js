@@ -16,6 +16,7 @@ const DATABASE = [
 
 let galleryState = {};
 let currentZoom = 100;
+let currentPageIndex = 0; // Добавлено: следим за текущим индексом глобально
 
 // === ЭЛЕМЕНТЫ ===
 const container = document.getElementById('pages-container');
@@ -104,7 +105,7 @@ function init() {
         const navItem = document.createElement('div');
         navItem.className = 'nav-item';
         navItem.id = `nav-${index}`;
-        navItem.onclick = () => window.scrollToPage(index); // Важно: вызываем глобальную функцию
+        navItem.onclick = () => window.scrollToPage(index);
         navItem.innerHTML = `<img src="${item.type === 'cover' ? item.img : item.img}" class="nav-thumb"><span class="nav-label">${item.id || 'Cover'}</span>`;
         navContainer.appendChild(navItem);
     });
@@ -114,31 +115,30 @@ function init() {
 
 // === ЛОГИКА МЕНЮ ===
 tocBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // Чтобы клик не ушел на body
+    e.stopPropagation();
     tocPopup.classList.toggle('show');
 });
 
-// Закрыть меню при клике в любое другое место
 document.body.addEventListener('click', () => {
     tocPopup.classList.remove('show');
 });
 
-// Глобальная функция для использования в HTML onclick
+// Глобальная функция скролла
 window.scrollToPage = function(index) {
     const el = document.getElementById(`page-${index}`);
     if(el) {
-        el.scrollIntoView({ behavior: 'auto' });
+        // Используем 'auto' для резкого перехода или 'smooth' для плавного, если хотите анимацию
+        el.scrollIntoView({ behavior: 'auto' }); 
+        // Принудительно обновляем индекс, на случай если Observer не успеет
+        currentPageIndex = index;
     }
 }
 
-// Фильтр заглушка (просто скроллит к одежде)
 window.filterTo = function(category) {
-    // В реальном проекте тут можно фильтровать, сейчас просто скроллим к первому товару
     window.scrollToPage(1);
 }
 
-
-// === ГАЛЕРЕЯ, ЗУМ, СКРОЛЛ ===
+// === ГАЛЕРЕЯ ТОВАРОВ ===
 window.setGalleryImage = function(pageIndex, imgIndex) { updateGalleryView(pageIndex, imgIndex); }
 window.switchImage = function(pageIndex, direction) {
     const sheet = document.getElementById(`page-${pageIndex}`);
@@ -161,10 +161,13 @@ function updateGalleryView(pageIndex, imgIndex) {
     });
 }
 
+// === OBSERVER (Следит за активной страницей) ===
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
             const index = parseInt(entry.target.id.split('-')[1]);
+            currentPageIndex = index; // Синхронизируем переменную
+
             const item = DATABASE[index];
             if(document.activeElement !== pageInput) pageInput.value = index + 1;
             
@@ -173,13 +176,40 @@ const observer = new IntersectionObserver((entries) => {
 
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             const activeNav = document.getElementById(`nav-${index}`);
-            if(activeNav) activeNav.classList.add('active');
+            if(activeNav) {
+                activeNav.classList.add('active');
+                
+                // --- ПРАВКА 2: Сайдбар следует за активным экраном ---
+                // block: 'center' держит активную иконку посередине сайдбара
+                activeNav.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     });
 }, { threshold: 0.4 });
 
 setTimeout(() => { document.querySelectorAll('.paper-sheet').forEach(el => observer.observe(el)); }, 500);
 
+
+// === УПРАВЛЕНИЕ КЛАВИАТУРОЙ (ПРАВКА 1) ===
+document.addEventListener('keydown', (e) => {
+    // Если пользователь пишет в инпуте зума или номера страницы — не перехватываем
+    if (e.target.tagName === 'INPUT') return;
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault(); // Отменяем стандартный мини-скролл
+        if (currentPageIndex < DATABASE.length - 1) {
+            window.scrollToPage(currentPageIndex + 1);
+        }
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (currentPageIndex > 0) {
+            window.scrollToPage(currentPageIndex - 1);
+        }
+    }
+});
+
+
+// === ЗУМ И ИНПУТЫ ===
 window.changeZoom = function(delta) { updateZoom(currentZoom + delta); }
 document.getElementById('zoom-input').addEventListener('change', (e) => updateZoom(parseInt(e.target.value)));
 function updateZoom(val) {

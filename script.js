@@ -122,4 +122,139 @@ function init() {
                     </div>
                 </div>
 
-                <div style="margin-top:auto; padding-top:20px; border-top:2px solid black; display:flex; justify-content:space-between;
+                <div style="margin-top:auto; padding-top:20px; border-top:2px solid black; display:flex; justify-content:space-between; font-size:9px; font-family:monospace; color:#666;">
+                    <span>Copyright © 2025 Love expensive®</span>
+                    <span>${item.id}.</span>
+                </div>
+            `;
+        }
+
+        container.appendChild(sheet);
+
+        // 2. Создаем Миниатюру в Сайдбаре
+        const navItem = document.createElement('div');
+        navItem.className = 'nav-item';
+        navItem.id = `nav-${index}`;
+        navItem.onclick = () => scrollToPage(index);
+        
+        // Для обложки - просто текст или картинка
+        const thumbSrc = item.type === 'cover' ? item.img : item.img;
+        
+        navItem.innerHTML = `
+            <img src="${thumbSrc}" class="nav-thumb">
+            <span class="nav-label">${item.id || 'Cover'}</span>
+        `;
+        navContainer.appendChild(navItem);
+    });
+
+    // Устанавливаем зум
+    updateZoom(currentZoom);
+}
+
+// === ЛОГИКА ГАЛЕРЕИ ===
+
+// Переключение по клику на миниатюру
+window.setGalleryImage = function(pageIndex, imgIndex) {
+    updateGalleryView(pageIndex, imgIndex);
+}
+
+// Переключение стрелками (зонами)
+window.switchImage = function(pageIndex, direction) {
+    const sheet = document.getElementById(`page-${pageIndex}`);
+    const images = JSON.parse(sheet.dataset.gallery);
+    let current = galleryState[pageIndex];
+    
+    let next = current + direction;
+    if (next < 0) next = images.length - 1; // Зациклить
+    if (next >= images.length) next = 0;
+    
+    updateGalleryView(pageIndex, next);
+}
+
+function updateGalleryView(pageIndex, imgIndex) {
+    galleryState[pageIndex] = imgIndex;
+    const sheet = document.getElementById(`page-${pageIndex}`);
+    const images = JSON.parse(sheet.dataset.gallery);
+    
+    // Меняем большую картинку
+    const mainImg = document.getElementById(`main-img-${pageIndex}`);
+    mainImg.src = images[imgIndex];
+    
+    // Обновляем активную миниатюру
+    const thumbContainer = document.getElementById(`gallery-thumbs-${pageIndex}`);
+    const thumbs = thumbContainer.getElementsByClassName('mini-thumb');
+    Array.from(thumbs).forEach((t, i) => {
+        if(i === imgIndex) t.classList.add('active');
+        else t.classList.remove('active');
+    });
+}
+
+
+// === СКРОЛЛ И ЗУМ ===
+
+function scrollToPage(index) {
+    const el = document.getElementById(`page-${index}`);
+    el.scrollIntoView({ behavior: 'auto' }); // auto быстрее чем smooth для PDF
+}
+
+// Следим за скроллом, чтобы менять URL и подсветку в меню
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const idStr = entry.target.id; // "page-0"
+            const index = parseInt(idStr.split('-')[1]);
+            const item = DATABASE[index];
+
+            // Инпут
+            if(document.activeElement !== pageInput) pageInput.value = index + 1;
+
+            // URL
+            let newUrl = '/';
+            if (item.type === 'cover') {
+                newUrl = `${PREFIX}/index.pdf`;
+            } else {
+                newUrl = `${PREFIX}/${item.key}.pdf`;
+            }
+            if(window.location.pathname !== newUrl) {
+                 window.history.replaceState(null, "", newUrl);
+            }
+
+            // Сайдбар Active
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const activeNav = document.getElementById(`nav-${index}`);
+            if(activeNav) activeNav.classList.add('active');
+        }
+    });
+}, { threshold: 0.4 }); // 40% видимости
+
+setTimeout(() => {
+    document.querySelectorAll('.paper-sheet').forEach(el => observer.observe(el));
+}, 500);
+
+// ЗУМ
+window.changeZoom = function(delta) {
+    updateZoom(currentZoom + delta);
+}
+
+document.getElementById('zoom-input').addEventListener('change', (e) => {
+    updateZoom(parseInt(e.target.value));
+});
+
+function updateZoom(val) {
+    currentZoom = val;
+    if(currentZoom < 25) currentZoom = 25;
+    if(currentZoom > 200) currentZoom = 200;
+    document.getElementById('zoom-input').value = currentZoom;
+    zoomWrapper.style.transform = `scale(${currentZoom / 100})`;
+}
+
+// Инпут страниц
+pageInput.addEventListener('change', (e) => {
+    let val = parseInt(e.target.value);
+    if(val < 1) val = 1;
+    if(val > DATABASE.length) val = DATABASE.length;
+    scrollToPage(val - 1);
+});
+
+// START
+init();

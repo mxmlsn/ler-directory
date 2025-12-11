@@ -285,7 +285,7 @@ h1 { font-size: 32px; text-transform: uppercase; margin: 10px 0 20px 0; }
 
 /* Стиль зачеркнутого текста */
 .cookie-banner s {
-    text-decoration-thickness: 2px; /* Толстая линия зачеркивания */
+    text-decoration-thickness: 1px; /* Толстая линия зачеркивания */
     color: #fff; /* Тоже белая, как просили */
     margin-right: 4px;
 }

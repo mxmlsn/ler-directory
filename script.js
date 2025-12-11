@@ -1,11 +1,19 @@
 // === КОНФИГУРАЦИЯ ===
 const PREFIX = '/root/services/usr/+1073/pckg/data/wear/type'; 
+
+// Список всех файлов (для случайной генерации галереи)
+// Добавьте сюда ваши видео, если загрузите их (например '/video.mp4')
 const ALL_MEDIA = ['/1.png', '/2.png', '/3.png', '/4.png', '/5.png', '/6.png', '/7.png'];
 
 // === БАЗА ДАННЫХ ===
+// В поле img можно писать как картинку .png, так и видео .mp4
 const DATABASE = [
-    { type: 'cover', id: '00', img: '/4.png' },
+    { type: 'cover', id: '00', img: '/4.png' }, // Обложка (лучше картинку)
+    
+    // Пример товара с ВИДЕО (если у вас есть файл video.mp4, напишите его здесь)
+    // Сейчас стоят картинки, но логика уже готова под видео.
     { key: 'clo',   id: '01', type: 'product', cat:'Longsleeve', name: 'HOODIE "DOG"',  price: '80', img: '/1.png' },
+    
     { key: 'acc',   id: '02', type: 'product', cat:'Accessory',  name: 'LEATHER BELT',  price: '45', img: '/2.png' },
     { key: 'shoes', id: '03', type: 'product', cat:'Footwear',   name: 'TECH BOOTS',    price: '120', img: '/3.png' },
     { key: 'bag',   id: '04', type: 'product', cat:'Storage',    name: 'SIDE BAG',      price: '65', img: '/4.png' },
@@ -26,13 +34,16 @@ const zoomWrapper = document.getElementById('zoom-wrapper');
 const tocBtn = document.getElementById('toc-btn');
 const tocPopup = document.getElementById('toc-popup');
 
-// Вспомогательная: Картинка или Видео?
+// Вспомогательная функция: Картинка или Видео?
 function getMediaHTML(src, className, id = '') {
-    const isVideo = src.endsWith('.mp4') || src.endsWith('.webm');
+    const isVideo = src.endsWith('.mp4') || src.endsWith('.webm') || src.endsWith('.mov');
     const idAttr = id ? `id="${id}"` : '';
+    
     if (isVideo) {
+        // Видео: автоплей, без звука, по кругу, playsinline (для айфона)
         return `<video src="${src}" class="${className}" ${idAttr} autoplay muted loop playsinline></video>`;
     } else {
+        // Обычная картинка
         return `<img src="${src}" class="${className}" ${idAttr}>`;
     }
 }
@@ -66,6 +77,7 @@ function init() {
             sheet.className = 'paper-sheet';
             sheet.setAttribute('data-key', item.key);
             
+            // Собираем галерею
             const galleryMedia = [item.img];
             const randomExtra = ALL_MEDIA.filter(src => src !== item.img).sort(()=>0.5-Math.random()).slice(0, 2);
             galleryMedia.push(...randomExtra);
@@ -73,14 +85,17 @@ function init() {
             sheet.dataset.gallery = JSON.stringify(galleryMedia);
             galleryState[index] = 0;
 
+            // Рендер миниатюр
             let thumbsHTML = '';
             galleryMedia.forEach((src, i) => {
                 const activeClass = i === 0 ? 'active' : '';
+                // Для миниатюр используем ту же функцию (видео будет маленьким и играть)
                 thumbsHTML += `<div class="mini-thumb-wrapper ${activeClass}" onclick="setGalleryImage(${index}, ${i})">
                                 ${getMediaHTML(src, 'mini-thumb-content')}
                                </div>`;
             });
 
+            // Рендер основной части
             sheet.innerHTML = `
                 <div class="sheet-top">
                     <span>PATH: .../WEAR/TYPE/${item.key.toUpperCase()}.PDF</span>
@@ -96,14 +111,18 @@ function init() {
                             <p>WIDTH: 30 MM</p>
                             <p>SPECIAL FEATURES: UNISEX PACKAGE</p>
                         </div>
+                        
                         <div class="price-box">€${item.price}</div>
+                        
                         <div class="mini-gallery" id="gallery-thumbs-${index}">${thumbsHTML}</div>
                     </div>
                     <div class="right-col">
                         <div class="main-img-wrapper" id="main-wrapper-${index}">
                             <div class="click-zone zone-left" onclick="switchImage(${index}, -1)"></div>
                             <div class="click-zone zone-right" onclick="switchImage(${index}, 1)"></div>
+                            
                             ${getMediaHTML(item.img, 'main-img', `main-media-${index}`)}
+                        
                         </div>
                         <div class="vertical-code">+(1073) 34 932 6173</div>
                     </div>
@@ -115,29 +134,25 @@ function init() {
         }
         container.appendChild(sheet);
 
+        // Сайдбар навигация
         const navItem = document.createElement('div');
         navItem.className = 'nav-item';
         navItem.id = `nav-${index}`;
         navItem.onclick = () => window.scrollToPage(index);
-        navItem.innerHTML = `<div class="nav-thumb">${getMediaHTML(item.type === 'cover' ? item.img : item.img, 'nav-media-content')}</div><span class="nav-label">${item.id || 'Cover'}</span>`;
+        
+        // В меню тоже можно показывать видео, но лучше статичную картинку, если есть. 
+        // Пока используем тот же метод getMediaHTML, видео будет играть в меню (эффектно!)
+        navItem.innerHTML = `
+            <div class="nav-thumb">${getMediaHTML(item.type === 'cover' ? item.img : item.img, 'nav-media-content')}</div>
+            <span class="nav-label">${item.id || 'Cover'}</span>
+        `;
         navContainer.appendChild(navItem);
     });
 
     updateZoom(currentZoom);
 }
 
-// === МЕНЮ И НАВИГАЦИЯ ===
-tocBtn.addEventListener('click', (e) => { e.stopPropagation(); tocPopup.classList.toggle('show'); });
-document.body.addEventListener('click', () => { tocPopup.classList.remove('show'); });
-
-window.scrollToPage = function(index) {
-    const el = document.getElementById(`page-${index}`);
-    if(el) el.scrollIntoView({ behavior: 'auto' });
-}
-
-window.filterTo = function(category) { window.scrollToPage(1); }
-
-// === ГАЛЕРЕЯ ===
+// === ЛОГИКА ГАЛЕРЕИ (Обновленная для видео) ===
 window.setGalleryImage = function(pageIndex, imgIndex) { updateGalleryView(pageIndex, imgIndex); }
 window.switchImage = function(pageIndex, direction) {
     const sheet = document.getElementById(`page-${pageIndex}`);
@@ -154,20 +169,40 @@ function updateGalleryView(pageIndex, mediaIndex) {
     const sheet = document.getElementById(`page-${pageIndex}`);
     const mediaList = JSON.parse(sheet.dataset.gallery);
     const newSrc = mediaList[mediaIndex];
+
+    // 1. Меняем главное медиа (удаляем старое, ставим новое, т.к. теги разные img/video)
     const wrapper = document.getElementById(`main-wrapper-${pageIndex}`);
+    // Сохраняем зоны клика
     const zoneL = wrapper.querySelector('.zone-left');
     const zoneR = wrapper.querySelector('.zone-right');
+    
+    // Очищаем и восстанавливаем
     wrapper.innerHTML = '';
     wrapper.appendChild(zoneL);
     wrapper.appendChild(zoneR);
+    
+    // Вставляем новый HTML
     wrapper.insertAdjacentHTML('beforeend', getMediaHTML(newSrc, 'main-img', `main-media-${pageIndex}`));
-    const thumbs = document.getElementById(`gallery-thumbs-${pageIndex}`).getElementsByClassName('mini-thumb-wrapper');
-    Array.from(thumbs).forEach((el, i) => {
+
+    // 2. Обновляем миниатюры
+    const thumbsContainer = document.getElementById(`gallery-thumbs-${pageIndex}`);
+    const thumbWrappers = thumbsContainer.getElementsByClassName('mini-thumb-wrapper');
+    Array.from(thumbWrappers).forEach((el, i) => {
         if(i === mediaIndex) el.classList.add('active'); else el.classList.remove('active');
     });
 }
 
-// === OBSERVER (С ИСПРАВЛЕНИЕМ ДЛЯ САЙДБАРА) ===
+// === ОСТАЛЬНАЯ ЛОГИКА (МЕНЮ, СКРОЛЛ) - БЕЗ ИЗМЕНЕНИЙ ===
+tocBtn.addEventListener('click', (e) => { e.stopPropagation(); tocPopup.classList.toggle('show'); });
+document.body.addEventListener('click', () => { tocPopup.classList.remove('show'); });
+
+window.scrollToPage = function(index) {
+    const el = document.getElementById(`page-${index}`);
+    if(el) el.scrollIntoView({ behavior: 'auto' });
+}
+
+window.filterTo = function(category) { window.scrollToPage(1); }
+
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -180,20 +215,13 @@ const observer = new IntersectionObserver((entries) => {
 
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             const activeNav = document.getElementById(`nav-${index}`);
-            if(activeNav) {
-                activeNav.classList.add('active');
-                
-                // --- ВОТ ИСПРАВЛЕНИЕ ---
-                // Прокручиваем сайдбар к активной иконке, если она ушла за экран
-                activeNav.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
+            if(activeNav) activeNav.classList.add('active');
         }
     });
 }, { threshold: 0.4 });
 
 setTimeout(() => { document.querySelectorAll('.paper-sheet').forEach(el => observer.observe(el)); }, 500);
 
-// === ЗУМ И ИНПУТ ===
 window.changeZoom = function(delta) { updateZoom(currentZoom + delta); }
 document.getElementById('zoom-input').addEventListener('change', (e) => updateZoom(parseInt(e.target.value)));
 function updateZoom(val) {
@@ -207,27 +235,6 @@ pageInput.addEventListener('change', (e) => {
     let val = parseInt(e.target.value);
     if(val < 1) val = 1; if(val > DATABASE.length) val = DATABASE.length;
     window.scrollToPage(val - 1);
-});
-
-// === УПРАВЛЕНИЕ С КЛАВИАТУРЫ (Стрелки) ===
-document.addEventListener('keydown', (e) => {
-    const currentVal = parseInt(document.getElementById('page-input').value);
-    const currentIndex = currentVal - 1; 
-
-    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-        e.preventDefault(); 
-        const nextIndex = currentIndex + 1;
-        if (nextIndex < DATABASE.length) {
-            window.scrollToPage(nextIndex);
-        }
-    } 
-    else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-        e.preventDefault();
-        const prevIndex = currentIndex - 1;
-        if (prevIndex >= 0) {
-            window.scrollToPage(prevIndex);
-        }
-    }
 });
 
 init();

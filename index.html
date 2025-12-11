@@ -3,34 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ler.directory system view</title>
+    <title>ler.directory view</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="meta-info">
-            SYSTEM: ONLINE<br>
-            MOUNT: /usr/+1073<br>
-            MODE: READ-ONLY
+    <div class="pdf-sidebar">
+        <div class="sidebar-header">
+            <div class="icon-menu">☰</div>
+            <span>Index</span>
         </div>
         <div id="nav-container">
             </div>
     </div>
 
-    <div class="main-content">
+    <div class="pdf-viewer">
+        
+        <div class="pdf-toolbar">
+            <span class="toolbar-title">specification_doc_v2.pdf</span>
+            <div class="toolbar-controls">
+                <span>-</span> <span>100%</span> <span>+</span>
+            </div>
+        </div>
+
         <div class="paper-sheet">
-            <div class="paper-header">
-                <span id="path-display">WAITING FOR PATH...</span>
+            
+            <div class="sheet-header">
+                <span id="path-display">WAITING...</span>
                 <span>REF: 35099600 S</span>
             </div>
-            
-            <div class="image-container" onclick="nextPage()">
-                <img id="main-image" src="" alt="Content">
+
+            <div class="sheet-content">
+                
+                <div class="info-column">
+                    <div class="item-header">
+                        <span class="item-ref">Item # <span id="item-id">--</span></span>
+                        <h1 id="item-title">LOADING</h1>
+                    </div>
+
+                    <div class="tech-specs">
+                        <p>MATERIAL: LEATHER / SYNTHETIC</p>
+                        <p>WAIST SIZE: 150 CM</p>
+                        <p>COLOR: BLACK / GREY</p>
+                        <p>WIDTH: 30 MM</p>
+                        <p>THICKNESS: 3.6-3.8 MM</p>
+                        <p>SPECIAL FEATURES: UNISEX PACKAGE</p>
+                        <p>TYPE: PLASTIC ENVELOPE</p>
+                        <p>SPECIFICATION: CSS 286.21 A3 / LATEST</p>
+                    </div>
+
+                    <div class="price-tag">
+                        €<span id="item-price">00</span>
+                    </div>
+
+                    <div class="copyright">
+                        Copyright © 2009-2025, Love expensive® LTD
+                    </div>
+                </div>
+
+                <div class="image-column">
+                    <img id="main-image" src="" alt="Product view">
+                    <div class="side-code">+(1073) 34 932 6173</div>
+                </div>
+
             </div>
 
-            <div class="paper-footer">
-                ler.directory systems © 2025 // end of file
+            <div class="sheet-footer">
+                Tel.: +(1073) 34 932 6173; Fax: 847-680-8927; E-Mail: service@le-r.website
+                <span style="float:right">01.</span>
             </div>
         </div>
     </div>

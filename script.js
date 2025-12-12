@@ -2,15 +2,20 @@
 const PREFIX = '/root/services/usr/+1073/pckg/data/wear/type'; 
 const VIDEO_POSTER = '/img/shared/head-poster.png'; // Изображение для миниатюры видео
 
+// Функция подсчета товаров по тегу
+function getProductCountByTag(tag) {
+    return DATABASE.filter(item => item.type === 'product' && item.tag === tag).length;
+}
+
 // База Данных
 const DATABASE = [
     { type: 'cover', id: '00', img: '/img/cover/4.png' },
-    { key: 'clo',   id: '01', type: 'product', cat:'Longsleeve', name: 'HOODIE "DOG"',  price: '80', img: '/img/products/clo/main.png' },
-    { key: 'acc',   id: '02', type: 'product', cat:'Accessory',  name: 'LEATHER BELT',  price: '45', img: '/img/products/acc/main.png' },
-    { key: 'shoes', id: '03', type: 'product', cat:'Footwear',   name: 'TECH BOOTS',    price: '120', img: '/img/products/shoes/main.png' },
-    { key: 'bag',   id: '04', type: 'product', cat:'Storage',    name: 'SIDE BAG',      price: '65', img: '/img/products/bag/main.png' },
-    { key: 'hat',   id: '05', type: 'product', cat:'Headwear',   name: 'NYLON CAP',     price: '30', img: '/img/products/hat/main.png' },
-    { key: 'misc',  id: '06', type: 'product', cat:'Object',     name: 'KEYCHAIN',      price: '15', img: '/img/products/misc/main.png' },
+    { key: 'clo',   id: '01', type: 'product', cat:'Longsleeve', name: 'HOODIE "DOG"',  price: '80', img: '/img/products/clo/main.png', tag: 'longsleeve' },
+    { key: 'acc',   id: '02', type: 'product', cat:'Accessory',  name: 'LEATHER BELT',  price: '45', img: '/img/products/acc/main.png', tag: 'tshirt' },
+    { key: 'shoes', id: '03', type: 'product', cat:'Footwear',   name: 'TECH BOOTS',    price: '120', img: '/img/products/shoes/main.png', tag: 'longsleeve' },
+    { key: 'bag',   id: '04', type: 'product', cat:'Storage',    name: 'SIDE BAG',      price: '65', img: '/img/products/bag/main.png', tag: 'tshirt' },
+    { key: 'hat',   id: '05', type: 'product', cat:'Headwear',   name: 'NYLON CAP',     price: '30', img: '/img/products/hat/main.png', tag: 'tshirt' },
+    { key: 'misc',  id: '06', type: 'product', cat:'Object',     name: 'KEYCHAIN',      price: '15', img: '/img/products/misc/main.png', tag: 'shirt' },
     { key: 'final', id: '07', type: 'product', cat:'Archive',    name: 'LOOKBOOK',      price: '00', img: '/img/products/final/main.png' },
     { type: 'contacts', id: '08', img: '/img/cover/4.png' }
 ];
@@ -18,6 +23,7 @@ const DATABASE = [
 let galleryState = {};
 let currentZoom = 100;
 let currentPageIndex = 0; // Добавлено: следим за текущим индексом глобально
+let currentFilter = null; // Текущий активный фильтр
 
 // === ЭЛЕМЕНТЫ ===
 const container = document.getElementById('pages-container');
@@ -29,7 +35,7 @@ const tocBtn = document.getElementById('toc-btn');
 const tocPopup = document.getElementById('toc-popup');
 
 function init() {
-    totalPagesSpan.innerText = DATABASE.length;
+    // Будет обновлено после применения фильтра
 
     DATABASE.forEach((item, index) => {
         const sheet = document.createElement('div');
@@ -42,12 +48,12 @@ function init() {
                     <div class="logo-big">Le®</div>
                     <div class="toc-title">Table of content</div>
                     <div class="toc-list">
-                        <p><strong>0. Welcome</strong></p>
+                        <p><strong onclick="filterTo('all');" style="cursor: pointer;">0. Welcome</strong></p>
                         <p><strong>1. Wearables</strong></p>
-                        <p class="toc-sub">1.1 T-shirts</p>
-                        <p class="toc-sub">1.2 Longsleeves</p>
-                        <p class="toc-sub">1.3 Shirts</p>
-                        <p class="toc-sub">1.4 Accessories</p>
+                        <p class="toc-sub" onclick="filterTo('tshirt');" style="cursor: pointer;">1.1 T-shirts <span style="color: #666;">(3)</span></p>
+                        <p class="toc-sub" onclick="filterTo('longsleeve');" style="cursor: pointer;">1.2 Longsleeves <span style="color: #666;">(2)</span></p>
+                        <p class="toc-sub" onclick="filterTo('shirt');" style="cursor: pointer;">1.3 Shirts <span style="color: #666;">(1)</span></p>
+                        <p class="toc-sub" onclick="filterTo('accessories');" style="cursor: pointer;">1.4 Accessories <span style="color: #666;">(0)</span></p>
                         <p><strong>2. Objects</strong></p>
                     </div>
                 </div>
@@ -150,21 +156,48 @@ function init() {
             navImg = '/img/shared/nav-thumb.png';
         }
         
-        navItem.innerHTML = `<img src="${navImg}" class="nav-thumb"><span class="nav-label">${item.id || 'Cover'}</span>`;
+        navItem.innerHTML = `<img src="${navImg}" class="nav-thumb"><span class="nav-label" data-original-id="${item.id || 'Cover'}">${item.id || 'Cover'}</span>`;
         navContainer.appendChild(navItem);
     });
 
     updateZoom(currentZoom);
+    
+    // Применяем фильтр по умолчанию (показываем все)
+    applyFilter(null);
 }
 
-// === ЛОГИКА МЕНЮ ===
-tocBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    tocPopup.classList.toggle('show');
+// === ЛОГИКА МЕНЮ (по ховеру) ===
+let menuTimeout = null;
+
+tocBtn.addEventListener('mouseenter', () => {
+    if (menuTimeout) clearTimeout(menuTimeout);
+    tocPopup.classList.add('show');
 });
 
-document.body.addEventListener('click', () => {
-    tocPopup.classList.remove('show');
+tocBtn.addEventListener('mouseleave', () => {
+    menuTimeout = setTimeout(() => {
+        if (!tocPopup.matches(':hover')) {
+            tocPopup.classList.remove('show');
+        }
+    }, 100);
+});
+
+tocPopup.addEventListener('mouseenter', () => {
+    if (menuTimeout) clearTimeout(menuTimeout);
+    tocPopup.classList.add('show');
+});
+
+tocPopup.addEventListener('mouseleave', () => {
+    menuTimeout = setTimeout(() => {
+        tocPopup.classList.remove('show');
+    }, 100);
+});
+
+// Закрываем при клике вне меню
+document.body.addEventListener('click', (e) => {
+    if (!tocPopup.contains(e.target) && !tocBtn.contains(e.target)) {
+        tocPopup.classList.remove('show');
+    }
 });
 
 // Глобальная функция скролла
@@ -178,8 +211,307 @@ window.scrollToPage = function(index) {
     }
 }
 
+// Функция применения фильтра
+function applyFilter(filterTag) {
+    currentFilter = filterTag;
+    
+    DATABASE.forEach((item, index) => {
+        const page = document.getElementById(`page-${index}`);
+        const navItem = document.getElementById(`nav-${index}`);
+        
+        if (!page) return;
+        
+        let shouldShow = false;
+        
+        // Обложка и контакты всегда видимы
+        if (item.type === 'cover' || item.type === 'contacts') {
+            shouldShow = true;
+        } else if (filterTag === null || filterTag === 'all') {
+            // Если фильтр не выбран (all), показываем все
+            shouldShow = true;
+        } else {
+            // Показываем только товары с нужным тегом
+            shouldShow = (item.tag === filterTag);
+        }
+        
+        // Применяем эффект с blur
+        if (shouldShow) {
+            // Показываем элемент
+            if (page.style.display === 'none') {
+                page.style.display = 'block';
+                page.style.filter = 'blur(10px)';
+                page.style.opacity = '0';
+                // Анимация появления
+                setTimeout(() => {
+                    page.style.filter = 'blur(0px)';
+                    page.style.opacity = '1';
+                }, 10);
+            } else {
+                page.style.filter = 'blur(0px)';
+                page.style.opacity = '1';
+            }
+            page.style.transition = 'filter 0.3s, opacity 0.3s';
+            
+            if (navItem) {
+                if (navItem.style.display === 'none') {
+                    navItem.style.display = 'block';
+                    navItem.style.filter = 'blur(10px)';
+                    navItem.style.opacity = '0';
+                    setTimeout(() => {
+                        navItem.style.filter = 'blur(0px)';
+                        navItem.style.opacity = '1';
+                    }, 10);
+                } else {
+                    navItem.style.filter = 'blur(0px)';
+                    navItem.style.opacity = '1';
+                }
+                navItem.style.transition = 'filter 0.3s, opacity 0.3s';
+            }
+        } else {
+            // Эффект исчезновения через blur
+            page.style.filter = 'blur(10px)';
+            page.style.opacity = '0';
+            page.style.transition = 'filter 0.3s, opacity 0.3s';
+            setTimeout(() => {
+                if (page.style.opacity === '0') {
+                    page.style.display = 'none';
+                }
+            }, 300);
+            
+            if (navItem) {
+                navItem.style.filter = 'blur(10px)';
+                navItem.style.opacity = '0';
+                navItem.style.transition = 'filter 0.3s, opacity 0.3s';
+                setTimeout(() => {
+                    if (navItem.style.opacity === '0') {
+                        navItem.style.display = 'none';
+                    }
+                }, 300);
+            }
+        }
+    });
+    
+    // Обновляем активное состояние в меню
+    document.querySelectorAll('.toc-item').forEach(el => {
+        el.classList.remove('active');
+    });
+    
+    // Добавляем активный класс к выбранному пункту
+    let activeItem;
+    if (filterTag === null || filterTag === 'all') {
+        activeItem = document.querySelector('.toc-item[onclick*="filterTo(\'all\')"]') ||
+                     document.querySelector('.toc-item[onclick*="filterTo(\"all\")"]');
+    } else {
+        activeItem = document.querySelector(`.toc-item[onclick*="filterTo('${filterTag}')"]`) ||
+                     document.querySelector(`.toc-item[onclick*="filterTo(\"${filterTag}\")"]`);
+    }
+    if (activeItem) {
+        activeItem.classList.add('active');
+    }
+    
+    // Показываем/скрываем красную точку на иконке меню
+    const menuTrigger = document.getElementById('toc-btn');
+    let filterIndicator = document.getElementById('filter-indicator');
+    
+    if (filterTag && filterTag !== 'all' && filterTag !== null) {
+        if (!filterIndicator) {
+            filterIndicator = document.createElement('div');
+            filterIndicator.id = 'filter-indicator';
+            menuTrigger.appendChild(filterIndicator);
+        }
+        filterIndicator.style.display = 'block';
+    } else {
+        if (filterIndicator) {
+            filterIndicator.style.display = 'none';
+        }
+    }
+    
+    // Обновляем заголовок документа с тегом
+    const docTitle = document.querySelector('.doc-title');
+    if (docTitle) {
+        if (filterTag && filterTag !== 'all' && filterTag !== null) {
+            docTitle.innerHTML = `(${filterTag}) ler-lookbook(2026).pdf`;
+        } else {
+            docTitle.innerHTML = 'ler-lookbook(2026).pdf';
+        }
+    }
+    
+    // Проверяем, есть ли товары с выбранным тегом
+    let hasEmptyPage = false;
+    if (filterTag && filterTag !== 'all' && filterTag !== null) {
+        const productsWithTag = DATABASE.filter(item => 
+            item.type === 'product' && item.tag === filterTag
+        );
+        
+        // Если товаров нет, добавляем пустую страницу
+        if (productsWithTag.length === 0) {
+            hasEmptyPage = true;
+            let emptyPage = document.getElementById('empty-page');
+            if (!emptyPage) {
+                emptyPage = document.createElement('div');
+                emptyPage.id = 'empty-page';
+                emptyPage.className = 'paper-sheet empty-sheet';
+                emptyPage.innerHTML = `
+                    <div style="display: flex; flex-direction: column; height: 100%; justify-content: center; align-items: center; text-align: center;">
+                        <div style="font-family: monospace; font-size: 18px; color: #333; margin-bottom: 40px;">
+                            empty. choose something else
+                        </div>
+                        <div class="toc-list" style="text-align: left;">
+                            <p><strong onclick="filterTo('all');" style="cursor: pointer;">0. Welcome</strong></p>
+                            <p><strong>1. Wearables</strong></p>
+                            <p class="toc-sub" onclick="filterTo('tshirt');" style="cursor: pointer;">1.1 T-shirts <span style="color: #666;">(3)</span></p>
+                            <p class="toc-sub" onclick="filterTo('longsleeve');" style="cursor: pointer;">1.2 Longsleeves <span style="color: #666;">(2)</span></p>
+                            <p class="toc-sub" onclick="filterTo('shirt');" style="cursor: pointer;">1.3 Shirts <span style="color: #666;">(1)</span></p>
+                            <p class="toc-sub" onclick="filterTo('accessories');" style="cursor: pointer;">1.4 Accessories <span style="color: #666;">(0)</span></p>
+                            <p><strong>2. Objects</strong></p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(emptyPage);
+            }
+            emptyPage.style.display = 'block';
+            emptyPage.style.filter = 'blur(0px)';
+            emptyPage.style.opacity = '1';
+        } else {
+            // Удаляем пустую страницу если она есть
+            const emptyPage = document.getElementById('empty-page');
+            if (emptyPage) {
+                emptyPage.style.display = 'none';
+            }
+        }
+    } else {
+        // Удаляем пустую страницу при выборе "all"
+        const emptyPage = document.getElementById('empty-page');
+        if (emptyPage) {
+            emptyPage.style.display = 'none';
+        }
+    }
+    
+    // Используем requestAnimationFrame для обновления после применения всех стилей
+    requestAnimationFrame(() => {
+        // Собираем все видимые страницы в правильном порядке
+        const visiblePagesOrder = [];
+        DATABASE.forEach((item, index) => {
+            const page = document.getElementById(`page-${index}`);
+            if (page) {
+                const computedStyle = window.getComputedStyle(page);
+                if (computedStyle.display !== 'none' && page.style.display !== 'none') {
+                    visiblePagesOrder.push({ index, item, type: item.type });
+                }
+            }
+        });
+        
+        // Добавляем пустую страницу если есть
+        if (hasEmptyPage) {
+            const emptyPage = document.getElementById('empty-page');
+            if (emptyPage) {
+                const computedStyle = window.getComputedStyle(emptyPage);
+                if (computedStyle.display !== 'none' && emptyPage.style.display !== 'none') {
+                    visiblePagesOrder.push({ index: -1, item: { type: 'empty' }, type: 'empty' });
+                }
+            }
+        }
+        
+        const visibleCount = visiblePagesOrder.length;
+        
+        // Обновляем количество страниц
+        const totalPagesSpan = document.getElementById('total-pages');
+        if (totalPagesSpan) {
+            totalPagesSpan.innerText = visibleCount;
+        }
+        
+        // Обновляем нумерацию в левом меню - последовательно для всех видимых элементов
+        let pageNumber = 0;
+        visiblePagesOrder.forEach((pageInfo) => {
+            const { index, item } = pageInfo;
+            
+            if (index === -1) {
+                // Пустая страница не имеет навигации
+                return;
+            }
+            
+            const navItem = document.getElementById(`nav-${index}`);
+            if (navItem) {
+                const navLabel = navItem.querySelector('.nav-label');
+                if (navLabel) {
+                    // Все страницы нумеруются последовательно: 00, 01, 02, 03...
+                    navLabel.textContent = String(pageNumber).padStart(2, '0');
+                    pageNumber++;
+                }
+            }
+        });
+        
+        // Скрываем нумерацию для невидимых элементов
+        DATABASE.forEach((item, index) => {
+            const page = document.getElementById(`page-${index}`);
+            const navItem = document.getElementById(`nav-${index}`);
+            if (navItem && page) {
+                const computedStyle = window.getComputedStyle(page);
+                const isVisible = computedStyle.display !== 'none' && page.style.display !== 'none';
+                if (!isVisible) {
+                    const navLabel = navItem.querySelector('.nav-label');
+                    if (navLabel) {
+                        navLabel.textContent = '--';
+                    }
+                }
+            }
+        });
+    });
+    
+    // Скроллим к ближайшему видимому товару или не скроллим если уже в кадре
+    setTimeout(() => {
+        const visiblePages = Array.from(document.querySelectorAll('.paper-sheet')).filter(el => 
+            el.style.display !== 'none' && window.getComputedStyle(el).display !== 'none'
+        );
+        
+        if (visiblePages.length === 0) return;
+        
+        // Проверяем, есть ли видимые страницы в viewport
+        const viewportTop = window.scrollY;
+        const viewportBottom = viewportTop + window.innerHeight;
+        
+        let nearestPage = null;
+        let minDistance = Infinity;
+        let pageInViewport = false;
+        
+        visiblePages.forEach(page => {
+            const rect = page.getBoundingClientRect();
+            const pageTop = rect.top + window.scrollY;
+            const pageBottom = pageTop + rect.height;
+            
+            // Проверяем, видна ли страница в viewport
+            if (pageTop >= viewportTop && pageBottom <= viewportBottom) {
+                pageInViewport = true;
+                return;
+            }
+            
+            // Находим ближайшую страницу
+            const distance = Math.min(
+                Math.abs(pageTop - viewportTop),
+                Math.abs(pageBottom - viewportBottom)
+            );
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestPage = page;
+            }
+        });
+        
+        // Скроллим только если нет видимых страниц в viewport
+        if (!pageInViewport && nearestPage) {
+            nearestPage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, 100);
+}
+
 window.filterTo = function(category) {
-    window.scrollToPage(1);
+    if (category === 'all' || !category) {
+        applyFilter(null);
+    } else {
+        applyFilter(category);
+    }
+    // Закрываем меню после выбора
+    tocPopup.classList.remove('show');
 }
 
 // === ГАЛЕРЕЯ ТОВАРОВ ===
